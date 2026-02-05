@@ -28,7 +28,7 @@ static ae2f_inline ae2f_ccpure libdice_word_t __strcount(
 
 	return COUNT == 0xFFFFFFFF
 		   ? COUNT
-		   : ((COUNT << 2) + __strcount32(rd_mem[COUNT]) - c_pad_str);
+		   : (((COUNT - c_pad_str) << 2) + __strcount32(rd_mem[COUNT]));
 }
 
 static ae2f_inline ae2f_ccpure libdice_word_t __strequal2(
@@ -340,6 +340,7 @@ DICEIMPL libdice_ctx libdice_run_one(
 	assert(rd_interface_put->m_pfn_putf);
 	assert(rd_interface_put->m_pfn_putu);
 	assert(rd_interface_put->m_pfn_puti);
+	assert(c_num_lookup >= LIBDICE_LOOKUP_SECTION_LEN);
 
 	(void)rdwr_lookup;
 
@@ -561,9 +562,16 @@ DICEIMPL libdice_ctx libdice_run_one(
 			c_ctx.m_state = LIBDICE_CTX_STRINVAL;
 			return c_ctx;
 		}
-		else if (key_len > LIBDICE_LOOKUP_KEY_MAX_LEN)
+		else if (key_len > LIBDICE_LOOKUP_KEY_MAX_LEN || key_len % 4 != 0)
 		{
 			c_ctx.m_state = LIBDICE_CTX_KEYLENINVAL;
+			return c_ctx;
+		}
+		key_len /= 4;
+
+		if (c_num_ram < O0 + key_len)
+		{
+			c_ctx.m_state = LIBDICE_CTX_STRINVAL;
 			return c_ctx;
 		}
 
@@ -609,8 +617,6 @@ DICEIMPL libdice_ctx libdice_run_one(
 		libdice_word_t j = 0;
 		libdice_word_t tmp_key_len = 0;
 
-		assert(c_num_lookup >= LIBDICE_LOOKUP_SECTION_LEN);
-
 		__deref(O0, 1); /*pointer to key*/
 
 		key_len = __strcount(rdwr_ram, c_num_ram, O0);
@@ -619,12 +625,13 @@ DICEIMPL libdice_ctx libdice_run_one(
 			c_ctx.m_state = LIBDICE_CTX_STRINVAL;
 			return c_ctx;
 		}
-		else if (key_len > LIBDICE_LOOKUP_KEY_MAX_LEN)
+		else if (key_len > LIBDICE_LOOKUP_KEY_MAX_LEN || key_len % 4 != 0)
 		{
-			c_ctx.m_pc += 3;
 			c_ctx.m_state = LIBDICE_CTX_KEYLENINVAL;
 			return c_ctx;
 		}
+
+		key_len /= 4;
 
 		for (i = 0; i < c_ctx.m_lookup_used; i += LIBDICE_LOOKUP_SECTION_LEN)
 		{

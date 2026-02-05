@@ -6,6 +6,7 @@
  * | key_length | value_length | key | value |
  * Both key and value' length are variable.
  * key is terminated by nul-character
+ * key must be aligned 4-byte 
  */
 
 #define LIBDICE_LOOKUP_SECTION_LEN 16
