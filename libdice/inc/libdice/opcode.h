@@ -303,6 +303,23 @@ enum LIBDICE_OPCODE_
 	LIBDICE_OPCODE_UNDEF,
 
 	/**
+	 * 
+	 *	 setrandseed nref val(u32)
+	 * */
+	LIBDICE_OPCODE_SETRANDSEED,
+
+	/**
+	 * 
+	 *	 irand dst
+	 * */
+	LIBDICE_OPCODE_IRAND,
+
+	/**
+	 *	 frand dst
+	 * */
+	LIBDICE_OPCODE_FRAND,
+	
+	/**
 	 * @brief end of programme
 	 * @details nop
 	 * */

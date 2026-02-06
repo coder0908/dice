@@ -2,6 +2,8 @@
 #include <libdice/opcode.h>
 #include <../inc/libdice/lookup.h>
 #include <assert.h>
+#include <stdlib.h>
+#include "../inc/libdice/type.h"
 
 typedef struct
 {
@@ -657,6 +659,46 @@ DICEIMPL libdice_ctx libdice_run_one(
 
 		c_ctx.m_lookup_used -= LIBDICE_LOOKUP_SECTION_WORD_LEN;
 		c_ctx.m_pc += 3;
+		return c_ctx;
+	}
+	case LIBDICE_OPCODE_SETRANDSEED:
+	{
+		__deref(O0, 1);
+
+		srand(O0);
+
+		c_ctx.m_pc += 3;
+		return c_ctx;
+	}
+	case LIBDICE_OPCODE_IRAND:
+	{
+
+		ae2f_expected_but_else(rd_programme[c_ctx.m_pc] < c_num_ram)
+		{
+			c_ctx.m_state = LIBDICE_CTX_DEREFINVAL;
+			return c_ctx;
+		}
+
+		rd_programme[c_ctx.m_pc] = (libdice_word_t)rand(c_ctx.m_random_seed);
+
+		c_ctx.m_pc += 2;
+		return c_ctx;
+	}
+	case LIBDICE_OPCODE_FRAND:
+	{
+		libdice_type_literal tmp = {0,};
+
+		ae2f_expected_but_else(rd_programme[c_ctx.m_pc] < c_num_ram)
+		{
+			c_ctx.m_state = LIBDICE_CTX_DEREFINVAL;
+			return c_ctx;
+		}
+
+		tmp.m_i32 = rand(c_ctx.m_random_seed);
+				
+		rd_programme[c_ctx.m_pc] = tmp.m_f32;
+
+		c_ctx.m_pc += 2;
 		return c_ctx;
 	}
 	}
