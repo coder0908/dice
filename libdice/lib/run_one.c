@@ -673,30 +673,30 @@ DICEIMPL libdice_ctx libdice_run_one(
 	case LIBDICE_OPCODE_IRAND:
 	{
 
-		ae2f_expected_but_else(rd_programme[c_ctx.m_pc] < c_num_ram)
+		ae2f_expected_but_else(rd_programme[c_ctx.m_pc + 1] < c_num_ram)
 		{
 			c_ctx.m_state = LIBDICE_CTX_DEREFINVAL;
 			return c_ctx;
 		}
 
-		rd_programme[c_ctx.m_pc] = (libdice_word_t)rand(c_ctx.m_random_seed);
+		rdwr_ram[c_ctx.m_pc] = (libdice_word_t)rand();
 
 		c_ctx.m_pc += 2;
 		return c_ctx;
 	}
 	case LIBDICE_OPCODE_FRAND:
 	{
-		libdice_type_literal tmp = {0,};
+		libdice_type_literal tmp;
 
-		ae2f_expected_but_else(rd_programme[c_ctx.m_pc] < c_num_ram)
+		ae2f_expected_but_else(rd_programme[c_ctx.m_pc + 1] < c_num_ram)
 		{
 			c_ctx.m_state = LIBDICE_CTX_DEREFINVAL;
 			return c_ctx;
 		}
 
-		tmp.m_i32 = rand(c_ctx.m_random_seed);
+		tmp.m_f32 = (float)rand() /  (float)INT32_MAX;
 				
-		rd_programme[c_ctx.m_pc] = tmp.m_f32;
+		rdwr_ram[c_ctx.m_pc + 1] = tmp.m_u32;
 
 		c_ctx.m_pc += 2;
 		return c_ctx;
