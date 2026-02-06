@@ -20,7 +20,6 @@ enum LIBDICE_CTX_
 	/** @brief operation is invalid */
 	LIBDICE_CTX_OPINVAL,
 	LIBDICE_CTX_STRINVAL,
-	LIBDICE_CTX_KEYLENINVAL
 };
 
 typedef struct
