@@ -211,7 +211,7 @@ static libdice_word_t parse_ascii(token_t token)
 
 static libdice_word_t is_deref(const token_t token) {
 	libdice_word_t i = 0;
-	libdice_word_t token_len = strlen(token);
+	libdice_word_t token_len = (libdice_word_t)strlen(token);
 
 	if (!token_len) {
 		return 0;
