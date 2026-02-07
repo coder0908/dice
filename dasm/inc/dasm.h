@@ -11,10 +11,10 @@
 
 
 ae2f_extern DICECALL libdice_word_t dasm_assemble_line(
-		ae2f_LP(c_num_ret) libdice_word_t* ae2f_restrict	ret_buf_or_null,
-		const libdice_word_t					ret_buf_len,
+		ae2f_LP(c_num_ret) libdice_word_t* ae2f_restrict	rdwr_ret_buf,
+		const libdice_word_t					c_ret_buf_len,
 		ae2f_LP(str_len) const char* ae2f_restrict		rd_instruction,
-		const libdice_word_t					instruction_len
+		const libdice_word_t					c_instruction_len
 		);
 
 
