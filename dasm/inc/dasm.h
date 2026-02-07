@@ -7,31 +7,17 @@
 #include <libdice/type.h>
 #include <libdice/abi.h>
 
-enum DASM_ {
-	DASM_GOOD,
-	DASM_RET_INSUFFICIENT
-};
+#define DASM_ERR_RET ((libdice_word_t)(-1))
 
-/** 
- * @fn dasm
- * compile one assembly as `rd_str` and store to `ret`
- * @returns the word count which is actually required to store the output.
- *
- * @param r_num_ret_opt
- * 	is `ret_opt`'s required word count.
- *
- * @param c_num_str
- * 	is `rd_str`'s available count as byte
- *
- * @param c_num_ret
- * 	is `ret_opt`'s available count as word
- * */
-ae2f_extern DICECALL libdice_word_t dasm(
-		enum DASM_* ae2f_restrict const				r_state_opt,
-		ae2f_LP(c_num_ret) libdice_word_t* ae2f_restrict	ret_opt,
-		const libdice_word_t					c_num_ret,
-		ae2f_LP(c_num_str) const char* ae2f_restrict		rd_str,
-		const libdice_word_t					c_num_str
+
+ae2f_extern DICECALL libdice_word_t dasm_assemble_line(
+		ae2f_LP(c_num_ret) libdice_word_t* ae2f_restrict	ret_buf_or_null,
+		const libdice_word_t					ret_buf_len,
+		ae2f_LP(str_len) const char* ae2f_restrict		rd_instruction,
+		const libdice_word_t					instruction_len
 		);
+
+
+
 
 #endif
