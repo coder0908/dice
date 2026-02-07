@@ -1,5 +1,3 @@
-
-
 #include <dasm.h>
 #include <libdice/opcode.h>
 #include <dasm/keys.h>
@@ -9,7 +7,6 @@
 #include <stdio.h>
 
 typedef char token_t[DASM_TOKEN_MAX_LEN];
-
 
 typedef token_t token_buf_t[DASM_INSTRUCTION_MAX_TOKEN_CNT];
 
@@ -22,21 +19,16 @@ typedef struct instruction_data
 {
 	const char opcode_str[DASM_TOKEN_MAX_LEN];
 	enum LIBDICE_OPCODE_ machine_code;
-	libdice_word_t instruction_len;		/* word length*/	
+	libdice_word_t instruction_len; /* word length*/
 	libdice_word_t (*parser)(const struct instruction_data *data, token_buf_t token_buf, libdice_word_t token_cnt, libdice_word_t *instruction_words, libdice_word_t instruction_words_len);
-} instruction_data_t;	
-
-
+} instruction_data_t;
 
 typedef instruction_data_t instruction_data_table_t[DASM_OPCODE_CNT];
-
-
 
 /*------------------------------------Parse functions------------------------------------*/
 
 static libdice_word_t parser_opcode_set(const instruction_data_t *data, token_buf_t token_buf, libdice_word_t token_cnt, libdice_word_t *instruction_words, libdice_word_t instruction_words_len)
 {
-
 	char *end;
 
 	if (strcmp(data->opcode_str, token_buf[0]) != 0)
@@ -50,12 +42,12 @@ static libdice_word_t parser_opcode_set(const instruction_data_t *data, token_bu
 	}
 
 	instruction_words[0] = (libdice_word_t)(data->machine_code);
-	instruction_words[1] = (libdice_word_t)strtol(token_buf[1],  &end, 10);
+	instruction_words[1] = (libdice_word_t)strtol(token_buf[1], &end, 10);
 	if (end == token_buf[1] || *end != '\0')
 	{
 		return DASM_ERR_RET;
 	}
-	instruction_words[2] = (libdice_word_t)strtol(token_buf[2],  &end, 10);
+	instruction_words[2] = (libdice_word_t)strtol(token_buf[2], &end, 10);
 	if (end == token_buf[2] || *end != '\0')
 	{
 		return DASM_ERR_RET;
@@ -64,18 +56,122 @@ static libdice_word_t parser_opcode_set(const instruction_data_t *data, token_bu
 	return data->instruction_len;
 }
 
+static libdice_word_t parser_opcode_nop(const instruction_data_t *data, token_buf_t token_buf, libdice_word_t token_cnt, libdice_word_t *instruction_words, libdice_word_t instruction_words_len) {
+	if (strcmp(data->opcode_str, token_buf[0]) != 0) {
+		return DASM_ERR_RET;
+	}
+
+	if (instruction_words_len < data->instruction_len || token_cnt != data->instruction_len) {
+		return DASM_ERR_RET;
+	}
+
+	instruction_words[0] = (libdice_word_t)(data->machine_code);
+	return data->instruction_len;
+}
+
+static libdice_word_t parser_opcode_eop(const instruction_data_t *data, token_buf_t token_buf, libdice_word_t token_cnt, libdice_word_t *instruction_words, libdice_word_t instruction_words_len) {
+	if (strcmp(data->opcode_str, token_buf[0]) != 0) {
+		return DASM_ERR_RET;
+	}
+
+	if (instruction_words_len < data->instruction_len || token_cnt != data->instruction_len) {
+		return DASM_ERR_RET;
+	}
+
+	instruction_words[0] = (libdice_word_t)(data->machine_code);
+	return data->instruction_len;
+}
+
+static libdice_word_t parser_opcode_iadd(const instruction_data_t *data, token_buf_t token_buf, libdice_word_t token_cnt, libdice_word_t *instruction_words, libdice_word_t instruction_words_len) {
+	if (strcmp(data->opcode_str, token_buf[0]) != 0) {
+		return DASM_ERR_RET;
+	}
+
+	if (instruction_words_len < data->instruction_len || token_cnt != data->instruction_len) {
+		return DASM_ERR_RET;
+	}
+
+	instruction_words[0] = (libdice_word_t)(data->machine_code);
+	instruction_words[1] = (libdice_word_t)strtol(token_buf[1], NULL, 10);
+	instruction_words[2] = (libdice_word_t)strtol(token_buf[2], NULL, 10);
+	return data->instruction_len; 
+}
+
+static libdice_word_t parser_opcode_isub(const instruction_data_t *data, token_buf_t token_buf, libdice_word_t token_cnt, libdice_word_t *instruction_words, libdice_word_t instruction_words_len) {
+	if (strcmp(data->opcode_str, token_buf[0]) != 0) {
+		return DASM_ERR_RET;
+	}
+
+	if (instruction_words_len < data->instruction_len || token_cnt != data->instruction_len) {
+		return DASM_ERR_RET;
+	}
+
+	instruction_words[0] = (libdice_word_t)(data->machine_code);
+	instruction_words[1] = (libdice_word_t)strtol(token_buf[1], NULL, 10);
+	instruction_words[2] = (libdice_word_t)strtol(token_buf[2], NULL, 10);
+	return data->instruction_len;
+}
+
+static libdice_word_t parser_opcode_puti(const instruction_data_t *data, token_buf_t token_buf, libdice_word_t token_cnt, libdice_word_t *instruction_words, libdice_word_t instruction_words_len) {
+	if (strcmp(data->opcode_str, token_buf[0]) != 0) {
+		return DASM_ERR_RET;
+	}
+
+	if (instruction_words_len < data->instruction_len || token_cnt != data->instruction_len) {
+		return DASM_ERR_RET;
+	}
+
+	instruction_words[0] = (libdice_word_t)(data->machine_code);
+	instruction_words[1] = (libdice_word_t)strtol(token_buf[1], NULL, 10);
+	return data->instruction_len;
+}
+
+static libdice_word_t parser_opcode_jmp(const instruction_data_t *data, token_buf_t token_buf, libdice_word_t token_cnt, libdice_word_t *instruction_words, libdice_word_t instruction_words_len) {
+	if (strcmp(data->opcode_str, token_buf[0]) != 0) {
+		return DASM_ERR_RET;
+	}
+
+	if (instruction_words_len < data->instruction_len || token_cnt != data->instruction_len) {
+		return DASM_ERR_RET;
+	}
+
+	instruction_words[0] = (libdice_word_t)(data->machine_code);
+	instruction_words[1] = (libdice_word_t)strtol(token_buf[1], NULL, 10);
+	return data->instruction_len;
+}
+
+static libdice_word_t parser_opcode_jmpz(const instruction_data_t *data, token_buf_t token_buf, libdice_word_t token_cnt, libdice_word_t *instruction_words, libdice_word_t instruction_words_len) {
+	if (strcmp(data->opcode_str, token_buf[0]) != 0) {
+		return DASM_ERR_RET;
+	}
+
+	if (instruction_words_len < data->instruction_len || token_cnt != data->instruction_len) {
+		return DASM_ERR_RET;
+	}
+
+	instruction_words[0] = (libdice_word_t)(data->machine_code);
+
+	libdice_word_t condition = (libdice_word_t)strtol(token_buf[1], NULL, 10);
+	if (condition == 0) {
+		instruction_words[1] = (libdice_word_t)strtol(token_buf[2], NULL, 10);
+	} else {
+		instruction_words[1] = 0;
+	}
+
+	return data->instruction_len;
+}
 
 /*------------------------------------Parse functions------------------------------------*/
 
 static const instruction_data_table_t s_instruction_data_table = {
 	{DASM_SET, LIBDICE_OPCODE_SET, 3, parser_opcode_set},
-	{DASM_NOP, LIBDICE_OPCODE_NOP, 1, NULL},
-	{DASM_EOP, LIBDICE_OPCODE_EOP, 1, NULL},
-	{DASM_IADD, LIBDICE_OPCODE_IADD, 6, NULL},
-	{DASM_ISUB, LIBDICE_OPCODE_ISUB, 6, NULL},
-	{DASM_PUTI, LIBDICE_OPCODE_PUTI, 3, NULL},
-	{DASM_JMP, LIBDICE_OPCODE_JMP, 3, NULL},
-	{DASM_JMPZ, LIBDICE_OPCODE_JMPZ, 5, NULL}
+	{DASM_NOP, LIBDICE_OPCODE_NOP, 1, parser_opcode_nop},
+	{DASM_EOP, LIBDICE_OPCODE_EOP, 1, parser_opcode_eop},
+	{DASM_IADD, LIBDICE_OPCODE_IADD, 6, parser_opcode_iadd},
+	{DASM_ISUB, LIBDICE_OPCODE_ISUB, 6, parser_opcode_isub},
+	{DASM_PUTI, LIBDICE_OPCODE_PUTI, 3, parser_opcode_puti},
+	{DASM_JMP, LIBDICE_OPCODE_JMP, 3, parser_opcode_jmp},
+	{DASM_JMPZ, LIBDICE_OPCODE_JMPZ, 5, parser_opcode_jmpz}
 };
 
 
@@ -111,20 +207,17 @@ static libdice_word_t parse_ascii(token_t token)
 	}
 
 	return 0;
-	
 }
 
-static libdice_word_t is_deref(const token_t token)
-{
+static libdice_word_t is_deref(const token_t token) {
 	libdice_word_t i = 0;
-	libdice_word_t token_len = strlen(token);
+	libdice_word_t token_len = (libdice_word_t)strlen(token);
 
-	if (!token_len)
-	{
+	if (!token_len) {
 		return 0;
 	}
 
-	for (i=0; i<token_len; i++)
+	for (i = 0; i < token_len; i++)
 	{
 		if (token[i] != '*')
 		{
@@ -135,9 +228,8 @@ static libdice_word_t is_deref(const token_t token)
 	return 1;
 }
 
-static libdice_word_t parse_deref(token_t token)
-{
-	libdice_word_t token_len = strlen(token);
+static libdice_word_t parse_deref(token_t token) {
+	libdice_word_t token_len = (libdice_word_t)strlen(token);
 
 	if (snprintf(token, DASM_TOKEN_MAX_LEN, "%u", token_len) >= DASM_TOKEN_MAX_LEN)
 	{
@@ -147,7 +239,6 @@ static libdice_word_t parse_deref(token_t token)
 	return 0;
 }
 
-/* TODO : is_label, parse_label */
 static libdice_word_t preprocessor(token_buf_t token_buf,  const libdice_word_t token_cnt)
 {
 	libdice_word_t i = 0;
@@ -164,7 +255,7 @@ static libdice_word_t preprocessor(token_buf_t token_buf,  const libdice_word_t 
 		{
 			if (parse_deref(token_buf[i]) == DASM_ERR_RET)
 			{
-				return DASM_ERR_RET;	
+				return DASM_ERR_RET;
 			}
 		}
 	}
@@ -186,7 +277,7 @@ static libdice_word_t get_token_length(const char *str, const libdice_word_t str
 	if (str[0] == '*')
 	{
 		for (token_len = 1; token_len<str_len && str[token_len] == '*'; token_len++);
-		return token_len;	
+		return token_len;
 	}
 	if (str[0] == '\'')
 	{
@@ -219,7 +310,7 @@ static libdice_word_t get_token_length(const char *str, const libdice_word_t str
  * **/
 static libdice_word_t tokenize_instruction(const char *instruction, const libdice_word_t instruction_len, token_buf_t token_buf)
 {
-	libdice_word_t pc = 0;	
+	libdice_word_t pc = 0;
 	libdice_word_t token_cnt = 0;
 	libdice_word_t token_len = 0;
 
@@ -302,10 +393,10 @@ static libdice_word_t find_instruction_table_idx(const instruction_data_table_t 
 }
 
 DICEIMPL libdice_word_t dasm_assemble_line(
-		ae2f_LP(c_num_ret) libdice_word_t* ae2f_restrict	ret_buf,
-		const libdice_word_t					ret_buf_len,
-		ae2f_LP(str_len) const char* ae2f_restrict		rd_instruction,
-		const libdice_word_t					instruction_len
+		ae2f_LP(c_num_ret) libdice_word_t* ae2f_restrict    ret_buf,
+		const libdice_word_t                    ret_buf_len,
+		ae2f_LP(str_len) const char* ae2f_restrict      rd_instruction,
+		const libdice_word_t                    instruction_len
 		)
 {
 	libdice_word_t token_cnt = 0;
@@ -342,9 +433,7 @@ DICEIMPL libdice_word_t dasm_assemble_line(
 
 int main(void)
 {
-
-	printf("hello");
-
+	printf("Hello, World!");
 	return 0;
 }
 
