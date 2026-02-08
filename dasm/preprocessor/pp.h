@@ -4,7 +4,7 @@
 
 #include <libdice/type.h>
 
-libdice_word_t dasm_preprocess_programme(char *dst, libdice_word_t dst_len, const char *src);
+libdice_word_t libdasm_preprocess_programme(char *dst, libdice_word_t dst_len, const char *src);
 
 
 

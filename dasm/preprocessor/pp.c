@@ -24,7 +24,7 @@ enum e_libdasm_pp_state {
 
 
 
-static void dasm_update_pp_state(enum e_libdasm_pp_state *state, char c)
+static void libdasm_update_pp_state(enum e_libdasm_pp_state *state, char c)
 {
 
 	switch (*state)
@@ -97,7 +97,7 @@ static void dasm_update_pp_state(enum e_libdasm_pp_state *state, char c)
 	}
 }
 
-static libdice_word_t dasm_remove_comment(char *dst, const libdice_word_t c_dst_len, const char *c_rd_src_line, enum e_libdasm_pp_state *state, libdice_word_t *read_len)
+static libdice_word_t libdasm_remove_comment(char *dst, const libdice_word_t c_dst_len, const char *c_rd_src_line, enum e_libdasm_pp_state *state, libdice_word_t *read_len)
 {
 	libdice_word_t dst_cnt = 0;
 	char c = 0;
@@ -140,7 +140,7 @@ static libdice_word_t dasm_remove_comment(char *dst, const libdice_word_t c_dst_
 			dst[dst_cnt] = c;
 			dst_cnt++;
 		}
-		dasm_update_pp_state(state, c);
+		libdasm_update_pp_state(state, c);
 		
 		if (c == '\n' || c=='\0') {
 			break;
@@ -155,7 +155,7 @@ static libdice_word_t dasm_remove_comment(char *dst, const libdice_word_t c_dst_
 
 
 
-static libdice_word_t dasm_normalize_line(char *rdwr_dst, const libdice_word_t c_dst_len, const char *c_rd_src_line, libdice_word_t *read_len)
+static libdice_word_t libdasm_normalize_line(char *rdwr_dst, const libdice_word_t c_dst_len, const char *c_rd_src_line, libdice_word_t *read_len)
 {
 	libdice_word_t dst_cnt = 0;
 	libdice_word_t i = 0;
@@ -203,7 +203,7 @@ static libdice_word_t dasm_normalize_line(char *rdwr_dst, const libdice_word_t c
 	return dst_cnt;
 }
 
-static libdice_word_t dasm_remove_comments(char *rdwr_dst, const libdice_word_t c_dst_len, const char *rd_src)
+static libdice_word_t libdasm_remove_comments(char *rdwr_dst, const libdice_word_t c_dst_len, const char *rd_src)
 {
 	libdice_word_t tmp_read_len = 0;
 	libdice_word_t tmp_write_len = 0;
@@ -216,7 +216,7 @@ static libdice_word_t dasm_remove_comments(char *rdwr_dst, const libdice_word_t 
 		tmp_read_len = 0;
 		tmp_write_len = 0;
 
-		tmp_write_len = dasm_remove_comment(rdwr_dst+dst_cnt, c_dst_len-dst_cnt, rd_src+pc, &state, &tmp_read_len);
+		tmp_write_len = libdasm_remove_comment(rdwr_dst+dst_cnt, c_dst_len-dst_cnt, rd_src+pc, &state, &tmp_read_len);
 		assert(dst_cnt + tmp_write_len <= c_dst_len);
 		assert(tmp_read_len > 0);
 		dst_cnt += tmp_write_len;
@@ -227,7 +227,7 @@ static libdice_word_t dasm_remove_comments(char *rdwr_dst, const libdice_word_t 
 
 }
 
-static libdice_word_t dasm_normalize_lines(char *rdwr_dst, const libdice_word_t c_dst_len, const char *rd_src)
+static libdice_word_t libdasm_normalize_lines(char *rdwr_dst, const libdice_word_t c_dst_len, const char *rd_src)
 {
 	libdice_word_t tmp_read_len = 0;
 	libdice_word_t tmp_write_len = 0;
@@ -240,7 +240,7 @@ static libdice_word_t dasm_normalize_lines(char *rdwr_dst, const libdice_word_t 
 		tmp_write_len = 0;
 
 		
-		tmp_write_len = dasm_normalize_line(rdwr_dst+dst_cnt, c_dst_len-dst_cnt, rd_src+pc, &tmp_read_len);
+		tmp_write_len = libdasm_normalize_line(rdwr_dst+dst_cnt, c_dst_len-dst_cnt, rd_src+pc, &tmp_read_len);
 		assert(dst_cnt + tmp_write_len <= c_dst_len);
 		assert(tmp_read_len > 0);
 		dst_cnt += tmp_write_len;
@@ -250,11 +250,11 @@ static libdice_word_t dasm_normalize_lines(char *rdwr_dst, const libdice_word_t 
 	return dst_cnt;
 }
 
-libdice_word_t dasm_preprocess_programme(char *dst, const libdice_word_t c_dst_len, const char *rd_src)
+libdice_word_t libdasm_preprocess_programme(char *dst, const libdice_word_t c_dst_len, const char *rd_src)
 {
 	char *tmp_buf[2000] = {0,};
 	libdice_word_t tmp_write_cnt = 0;
 
-	dasm_remove_comments(tmp_buf, 2000, rd_src);
-	return dasm_normalize_lines(dst, c_dst_len, tmp_buf);
+	libdasm_remove_comments(tmp_buf, 2000, rd_src);
+	return libdasm_normalize_lines(dst, c_dst_len, tmp_buf);
 }
