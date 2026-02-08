@@ -3,7 +3,7 @@
 
 #include <libdice/type.h>
 
-#define LIBDASM_TOKEN_MAX_LEN 64
+#define LIBDASM_TOKEN_MAX_LEN 64	
 #define LIBDASM_TOKEN_MAX_CNT_PER_LINE 12
 
 enum e_libdasm_token_type {
@@ -25,11 +25,11 @@ struct libdasm_token {
 };
 
 struct libdasm_token_line {
-	struct libdasm_token m_token_line[LIBDASM_TOKEN_MAX_CNT_PER_LINE];
+	struct libdasm_token m_tokens[LIBDASM_TOKEN_MAX_CNT_PER_LINE];
 	libdice_word_t m_token_cnt;
 };
 
-static libdice_word_t libdasm_tokenize_programme(struct libdasm_token_line rdwr_token_table[], const libdice_word_t c_token_table_len, const char *rd_src);
+static libdice_word_t libdasm_tokenize_programme(struct libdasm_token_line rdwr_tokens[], const libdice_word_t c_token_table_len, const char *rd_src);
 
 
 #endif /* libdasm_tokenizer_h */
