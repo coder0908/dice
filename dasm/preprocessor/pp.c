@@ -15,7 +15,7 @@
 #define PP_BLOCK_COMMENT_END '}'
 
 
-enum e_libdasm_pp_state {
+enum LIBDASM_PP_STATE_ {
 	LIBDASM_PP_STATE_NORMAL = 0,
 	LIBDASM_PP_STATE_CHAR,
 	LIBDASM_PP_STATE_STRING,
@@ -25,7 +25,7 @@ enum e_libdasm_pp_state {
 
 
 
-static void libdasm_update_pp_state(enum e_libdasm_pp_state *state, char c)
+static void libdasm_update_pp_state(enum LIBDASM_PP_STATE_ *state, char c)
 {
 
 	switch (*state)
@@ -98,7 +98,7 @@ static void libdasm_update_pp_state(enum e_libdasm_pp_state *state, char c)
 	}
 }
 
-static libdice_word_t libdasm_remove_comment(char *dst, const libdice_word_t c_dst_len, const char *c_rd_src_line, enum e_libdasm_pp_state *state, libdice_word_t *read_len)
+static libdice_word_t libdasm_remove_comment(char *dst, const libdice_word_t c_dst_len, const char *c_rd_src_line, enum LIBDASM_PP_STATE_ *state, libdice_word_t *read_len)
 {
 	libdice_word_t dst_cnt = 0;
 	char c = 0;
@@ -219,7 +219,7 @@ static libdice_word_t libdasm_remove_comments(char *rdwr_dst, const libdice_word
 	libdice_word_t pc = 0;
 	libdice_word_t dst_cnt = 0;
 	const size_t rd_src_len = strlen(rd_src)+1;
-	enum e_libdasm_pp_state state = LIBDASM_PP_STATE_NORMAL;
+	enum LIBDASM_PP_STATE_ state = LIBDASM_PP_STATE_NORMAL;
 
 	while (pc < rd_src_len) {
 		tmp_read_len = 0;

@@ -6,10 +6,11 @@
 #define LIBDASM_TOKEN_MAX_LEN 64	
 #define LIBDASM_TOKEN_MAX_CNT_PER_LINE 12
 
-enum e_libdasm_token_type {
-	LIBDASM_TOKEN_TYPE_IDENT = 0,	/* opcode */
+/* TODO : change name to enum LIBDASM_TOKEN_TYPE_ */
+enum LIBDASM_TOKEN_TYPE_ {
+	LIBDASM_TOKEN_TYPE_IDENT = 0,	/* opcode, jmp *label */	
 	LIBDASM_TOKEN_TYPE_NUMBER,	/* immediate value, address*/
-	LIBDASM_TOKEN_TYPE_LABEL,	/* :label */		
+	LIBDASM_TOKEN_TYPE_LABEL,	/* label: */
 	LIBDASM_TOKEN_TYPE_STRING,	/* "string" */
 	LIBDASM_TOKEN_TYPE_CHAR,	/* 'char' */
 	LIBDASM_TOKEN_TYPE_OPERATOR,	/* asterisk*/
@@ -20,8 +21,8 @@ enum e_libdasm_token_type {
 
 
 struct libdasm_token {
-	char m_token[LIBDASM_TOKEN_MAX_LEN];
-	enum e_libdasm_token_type m_token_type;
+	char m_token[LIBDASM_TOKEN_MAX_LEN];	/* TODO : change name to m_text*/
+	enum LIBDASM_TOKEN_TYPE_ m_token_type;
 };
 
 struct libdasm_token_line {
@@ -29,7 +30,8 @@ struct libdasm_token_line {
 	libdice_word_t m_token_cnt;
 };
 
-static libdice_word_t libdasm_tokenize_programme(struct libdasm_token_line rdwr_tokens[], const libdice_word_t c_token_table_len, const char *rd_src);
+libdice_word_t libdasm_tokenize_programme(struct libdasm_token_line rdwr_token_lines[], const libdice_word_t c_token_table_len, const char *rd_src);
+libdice_word_t libdasm_get_token_line_len(const struct libdasm_token_line *rd_token_line);
 
 
 #endif /* libdasm_tokenizer_h */

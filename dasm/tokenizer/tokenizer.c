@@ -59,7 +59,7 @@ static inline void libdasm_insert_token_char(struct libdasm_token_line *rdwr_tok
 }
 
 /* Set last token's token type. Doesn't create new token */
-static inline void libdasm_set_token_type(struct libdasm_token_line *rdwr_token_line, const enum e_libdasm_token_type c_token_type)
+static inline void libdasm_set_token_type(struct libdasm_token_line *rdwr_token_line, const enum LIBDASM_TOKEN_TYPE_ c_token_type)
 {
 	assert(rdwr_token_line->m_token_cnt > 0);
 
@@ -73,6 +73,8 @@ static libdice_word_t libdasm_tokenize_line(struct libdasm_token_line *rdwr_toke
 	char c = 0;
 	enum e_tokenizer_state state = TOKENIZER_STATE_IDLE;
 	libdice_word_t char_cnt = 0;
+
+	libdasm_init_token_line(rdwr_token_line);
 
 	src_len = strlen(rd_src) + 1;
 	
@@ -138,7 +140,6 @@ static libdice_word_t libdasm_tokenize_line(struct libdasm_token_line *rdwr_toke
 				libdasm_insert_token_char(rdwr_token_line, c);
 				pc++;
 			} else if (c==':') {
-				libdasm_insert_token_char(rdwr_token_line, c);
 				libdasm_set_token_type(rdwr_token_line, LIBDASM_TOKEN_TYPE_LABEL);
 				state = TOKENIZER_STATE_IDLE;
 				pc++;
@@ -207,17 +208,37 @@ static libdice_word_t libdasm_tokenize_line(struct libdasm_token_line *rdwr_toke
 	return pc;
 }
 
-static libdice_word_t libdasm_tokenize_programme(struct libdasm_token_line rdwr_tokens[], const libdice_word_t c_token_table_len, const char *rd_src)
+
+/**
+ * @brief Reports the size occupied by the program in words.
+ * * */
+libdice_word_t libdasm_get_token_line_len(const struct libdasm_token_line *rd_token_line)
+{
+	libdice_word_t i = 0;
+	libdice_word_t len = 0;
+	enum LIBDASM_TOKEN_TYPE_ token_type = 0;
+
+	for (i=0; i<rd_token_line->m_token_cnt; i++) {
+		token_type = rd_token_line->m_tokens[i].m_token_type;
+		if (token_type == LIBDASM_TOKEN_TYPE_LABEL || token_type == LIBDASM_TOKEN_TYPE_EOL || token_type == LIBDASM_TOKEN_TYPE_EOP) {
+			continue;
+		}
+		len++;
+	}
+	return len;
+}
+
+static libdice_word_t libdasm_tokenize_programme(struct libdasm_token_line rdwr_token_lines[], const libdice_word_t c_token_table_len, const char *rd_src)
 {
 	libdice_word_t pc = 0;
-	libdice_word_t token_table_cnt = 0;
+	libdice_word_t token_line_cnt = 0;
 	libdice_word_t src_len = strlen(rd_src) + 1; 
 
 	while (pc < src_len) {
-		assert(token_table_cnt + 1 <= c_token_table_len);
-		pc += libdasm_tokenize_line(&rdwr_tokens[token_table_cnt], rd_src+pc);
-		token_table_cnt++;
+		assert(token_line_cnt + 1 <= c_token_table_len);
+		pc += libdasm_tokenize_line(&rdwr_token_lines[token_line_cnt], rd_src+pc);
+		token_line_cnt++;
 	} 
 
-	return token_table_cnt;
+	return token_line_cnt;
 }
