@@ -1,6 +1,8 @@
 #include "assembler.h"
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
+
 
 static libdice_word_t libdasm_assemble_line(libdice_word_t rdwr_dst[], libdice_word_t dst_len, const struct libdasm_parsed_line *rd_parsed_line)
 {

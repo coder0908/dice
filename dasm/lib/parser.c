@@ -3,6 +3,8 @@
 #include <dasm/keys.h>
 #include <dasm.h>
 #include <stdlib.h>
+#include <assert.h>
+#include <stdio.h>
 
 
 /* TODO : Checks whether the label appears only in the first token of line*/
@@ -21,7 +23,7 @@ struct libdasm_label_table {
 
 struct libdasm_opcode_define {
 	const char m_mnemonic[LIBDASM_TOKEN_MAX_LEN];
-	const enum LIPDICE_OPCODE_ m_opcode;
+	const enum LIBDICE_OPCODE_ m_opcode;
 	const libdice_word_t m_operand_cnt;
 };
 
@@ -182,7 +184,7 @@ static bool libdasm_parse_line(struct libdasm_parsed_line *rdwr_parsed_line, con
 {
 	libdice_word_t token_idx = 0;
 	libdice_word_t opcode_table_idx = 0;
-	struct libdasm_token *token = NULL;
+	const struct libdasm_token *token = NULL;
 	libdice_word_t tmp_operand_cnt = 0;
 
 	libdasm_init_parsed_line(rdwr_parsed_line);

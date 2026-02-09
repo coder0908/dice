@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ae2f/c90/StdBool.h>
-
+#include <assert.h>
 
 enum e_tokenizer_state {
 	TOKENIZER_STATE_IDLE = 0,
@@ -15,7 +15,7 @@ enum e_tokenizer_state {
 
 static bool is_alphabet(const char c_c)
 {
-	return c_c>='a' && c_c<='z' || c_c>='A' && c_c<='Z';
+	return (c_c>='a' && c_c<='z') || (c_c>='A' && c_c<='Z');
 }
 
 static bool is_number(const char c_c)
@@ -76,7 +76,7 @@ static libdice_word_t libdasm_tokenize_line(struct libdasm_token_line *rdwr_toke
 
 	libdasm_init_token_line(rdwr_token_line);
 
-	src_len = strlen(rd_src) + 1;
+	src_len = (libdice_word_t)strlen(rd_src) + 1;
 	
 	for (pc=0; pc<src_len;) {
 		c = rd_src[pc];
@@ -228,11 +228,11 @@ libdice_word_t libdasm_get_token_line_len(const struct libdasm_token_line *rd_to
 	return len;
 }
 
-static libdice_word_t libdasm_tokenize_programme(struct libdasm_token_line rdwr_token_lines[], const libdice_word_t c_token_table_len, const char *rd_src)
+libdice_word_t libdasm_tokenize_programme(struct libdasm_token_line rdwr_token_lines[], const libdice_word_t c_token_table_len, const char *rd_src)
 {
 	libdice_word_t pc = 0;
 	libdice_word_t token_line_cnt = 0;
-	libdice_word_t src_len = strlen(rd_src) + 1; 
+	libdice_word_t src_len = (libdice_word_t)strlen(rd_src) + 1; 
 
 	while (pc < src_len) {
 		assert(token_line_cnt + 1 <= c_token_table_len);

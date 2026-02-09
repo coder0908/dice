@@ -265,7 +265,6 @@ static libdice_word_t libdasm_normalize_lines(char *rdwr_dst, const libdice_word
 libdice_word_t libdasm_preprocess_programme(char *rdwr_dst, const libdice_word_t c_dst_len, const char *rd_src)
 {
 	char tmp_buf[LIBDASM_PROGRAMME_MAX_LEN] = {0,};
-	libdice_word_t tmp_write_cnt = 0;
 
 	libdasm_remove_comments(tmp_buf, LIBDASM_PROGRAMME_MAX_LEN, rd_src);
 	return libdasm_normalize_lines(rdwr_dst, c_dst_len, tmp_buf);
