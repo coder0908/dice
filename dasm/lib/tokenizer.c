@@ -100,7 +100,7 @@ static libdice_word_t libdasm_tokenize_line(struct libdasm_token_line rdwr_token
 					libdasm_set_token_type(rdwr_tokens, LIBDASM_TOKEN_TYPE_EOL);
 					read_cnt++;
 					return read_cnt;
-				} else if (c=='*') {
+				} else if (c=='*' || c=='#') {	
 					libdasm_create_new_token(rdwr_tokens);
 					libdasm_insert_token_char(rdwr_tokens, c);
 					libdasm_set_token_type(rdwr_tokens, LIBDASM_TOKEN_TYPE_OPERATOR);

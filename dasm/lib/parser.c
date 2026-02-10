@@ -9,7 +9,7 @@
 
 /* TODO : Checks whether the label appears only in the first token of line*/
 
-#define PARSER_MAX_LABEL_CNT 100
+#define PARSER_MAX_LABEL_CNT 1000
 
 struct libdasm_label {
 	char m_text[LIBDASM_TOKEN_MAX_LEN];
@@ -190,7 +190,6 @@ static void libdasm_init_parsed_line(struct libdasm_parsed_line *rdwr_parsed_lin
 static libdice_word_t libdasm_parse_operand(struct libdasm_operand *rdwr_operand, const struct libdasm_token *rd_token, 
 				const struct libdasm_label_table *rd_label_table)
 {
-
 	switch (rd_token->m_token_type) 
 		{
 			case LIBDASM_TOKEN_TYPE_IDENT:
@@ -231,6 +230,17 @@ static libdice_word_t libdasm_parse_operand(struct libdasm_operand *rdwr_operand
 			case LIBDASM_TOKEN_TYPE_OPERATOR:
 			{
 				int tmp = 0;
+				if (rdwr_operand->m_text[0] == '#') {
+					if (strlen(rdwr_operand->m_text) == 1) {
+						tmp = snprintf(rdwr_operand->m_text, LIBDASM_TOKEN_MAX_LEN, "%u", (unsigned)0);
+						if (tmp >= LIBDASM_TOKEN_MAX_LEN || tmp<0) {
+							return LIBDASM_ERR_RET;
+						}
+						return 1;
+					} else {
+						return LIBDASM_ERR_RET;
+					}
+				}
 				tmp = snprintf(rdwr_operand->m_text, LIBDASM_TOKEN_MAX_LEN, "%u", (unsigned)strlen(rd_token->m_text));
 				if (tmp >= LIBDASM_TOKEN_MAX_LEN || tmp<0) {
 					return LIBDASM_ERR_RET;
@@ -265,9 +275,9 @@ static libdice_word_t libdasm_parse_line(struct libdasm_parsed_line *rdwr_parsed
 		return LIBDASM_ERR_RET;	/* Shouldn't reach here*/
 	}
 
-	if (rd_token_line->m_token_cnt==1 
+	if (rd_token_line->m_token_cnt==1
 		&& (rd_token_line->m_tokens[0].m_token_type==LIBDASM_TOKEN_TYPE_EOL 
-			|| rd_token_line->m_tokens[0].m_token_type==LIBDASM_TOKEN_TYPE_EOP)) {
+		|| rd_token_line->m_tokens[0].m_token_type==LIBDASM_TOKEN_TYPE_EOP)) {
 		return 0;
 	}
 
@@ -296,7 +306,7 @@ static libdice_word_t libdasm_parse_line(struct libdasm_parsed_line *rdwr_parsed
 		libdice_word_t tmp = 0;
 		rd_token = &(rd_token_line->m_tokens[token_line_idx]);
 		/* boundary check */
-		
+
 		tmp = libdasm_parse_operand(&(rdwr_parsed_line->m_operands[tmp_operand_cnt]), rd_token, rd_label_table);
 		if (tmp == LIBDASM_ERR_RET) {
 			return LIBDASM_ERR_RET;
