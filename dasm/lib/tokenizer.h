@@ -21,7 +21,7 @@ enum LIBDASM_TOKEN_TYPE_ {
 
 
 struct libdasm_token {
-	char m_token[LIBDASM_TOKEN_MAX_LEN];	/* TODO : change name to m_text*/
+	char m_text[LIBDASM_TOKEN_MAX_LEN];	/* TODO : change name to m_text*/
 	enum LIBDASM_TOKEN_TYPE_ m_token_type;
 };
 
@@ -30,8 +30,8 @@ struct libdasm_token_line {
 	libdice_word_t m_token_cnt;
 };
 
-libdice_word_t libdasm_tokenize_programme(struct libdasm_token_line rdwr_token_lines[], const libdice_word_t c_token_table_len, const char *rd_src);
-libdice_word_t libdasm_get_token_line_len(const struct libdasm_token_line *rd_token_line);
+libdice_word_t libdasm_tokenize_programme(struct libdasm_token_line rdwr_token_lines[], const libdice_word_t c_token_lines_len, const char rd_src[], const libdice_word_t c_src_len);
+libdice_word_t libdasm_get_token_line_word_len(const struct libdasm_token_line *rd_token_line);
 
 
 #endif /* libdasm_tokenizer_h */

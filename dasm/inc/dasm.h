@@ -11,7 +11,7 @@
 #define LIBDASM_ERR_RET ((libdice_word_t)(-1))
 
 
-ae2f_extern DICECALL libdice_word_t libdasm_assemble_line(
+ae2f_extern DICECALL libdice_word_t libdasm_assemble(
 		ae2f_LP(c_num_ret) libdice_word_t* ae2f_restrict	rdwr_ret_buf,
 		const libdice_word_t					c_ret_buf_len,
 		ae2f_LP(str_len) const char* ae2f_restrict		rd_instruction,

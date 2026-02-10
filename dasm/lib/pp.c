@@ -25,115 +25,90 @@ enum LIBDASM_PP_STATE_ {
 
 
 
-static void libdasm_update_pp_state(enum LIBDASM_PP_STATE_ *state, char c)
+static enum LIBDASM_PP_STATE_ libdasm_update_pp_state(enum LIBDASM_PP_STATE_ state, const char c_c)
 {
 
-	switch (*state)
+	switch (state)
 	{
 		case LIBDASM_PP_STATE_NORMAL:
-		{	
-		switch (c)
-		{
-		case PP_CHAR_START:
-		{
-			*state = LIBDASM_PP_STATE_CHAR;
+			switch (c_c)
+			{
+				case PP_CHAR_START:
+					state = LIBDASM_PP_STATE_CHAR;
+					break;
+				case PP_STRING_START:
+					state = LIBDASM_PP_STATE_STRING;
+					break;
+				case PP_LINE_COMMENT_START:
+					state = LIBDASM_PP_STATE_LINE_COMMENT;
+					break;
+				case PP_BLOCK_COMMENT_START:
+					state = LIBDASM_PP_STATE_BLOCK_COMMENT;
+					break;
+				default:
+					break;	/* Keep current state */
+			}
 			break;
-		}
-		case PP_STRING_START:
-		{
-			*state = LIBDASM_PP_STATE_STRING;
+	
+		case LIBDASM_PP_STATE_CHAR:
+			if (c_c == PP_CHAR_END) {
+				state = LIBDASM_PP_STATE_NORMAL;
+			}
 			break;
-		}
-		case PP_LINE_COMMENT_START:
-		{
-			*state = LIBDASM_PP_STATE_LINE_COMMENT;
+		case LIBDASM_PP_STATE_STRING:
+			if (c_c == PP_STRING_END) {
+				state = LIBDASM_PP_STATE_NORMAL;
+			}
 			break;
-		}
-		case PP_BLOCK_COMMENT_START:
-		{
-			*state = LIBDASM_PP_STATE_BLOCK_COMMENT;
+		case LIBDASM_PP_STATE_LINE_COMMENT:
+			if (c_c == PP_LINE_COMMENT_END) {
+				state = LIBDASM_PP_STATE_NORMAL;
+			}
 			break;
-		}
+		case LIBDASM_PP_STATE_BLOCK_COMMENT:
+			if (c_c == PP_BLOCK_COMMENT_END) {
+				state = LIBDASM_PP_STATE_NORMAL;
+			}
+			break;
 		default:
-		{	
-			/* Keep current state */
+			assert(0);
 			break;
-		}
-		}
-		break;
 	}
-	case LIBDASM_PP_STATE_CHAR:
-	{
-		if (c == PP_CHAR_END) {
-			*state = LIBDASM_PP_STATE_NORMAL;
-		}
-		break;
-	}
-	case LIBDASM_PP_STATE_STRING:
-	{
-		if (c == PP_STRING_END) {
-			*state = LIBDASM_PP_STATE_NORMAL;
-		}
-		break;
-	}
-	case LIBDASM_PP_STATE_LINE_COMMENT:
-	{
-		if (c == PP_LINE_COMMENT_END) {
-			*state = LIBDASM_PP_STATE_NORMAL;
-		}
-		break;
-	}
-	case LIBDASM_PP_STATE_BLOCK_COMMENT:
-	{
-		if (c == PP_BLOCK_COMMENT_END) {
-			*state = LIBDASM_PP_STATE_NORMAL;
-		}
-		break;
-	}
-	default:
-	{
-		assert(0);
-		return;
-	}
-	}
+
+	return state;
 }
 
-static libdice_word_t libdasm_remove_comment(char *dst, const libdice_word_t c_dst_len, const char *c_rd_src_line, enum LIBDASM_PP_STATE_ *state, libdice_word_t *read_len)
+
+static libdice_word_t libdasm_remove_comment_from_line(char rdwr_dst[], const libdice_word_t c_dst_len, 
+						const char rd_src[], const libdice_word_t c_src_len, 
+						enum LIBDASM_PP_STATE_ *rdwr_state, libdice_word_t *rdwr_read_cnt)
 {
-	libdice_word_t dst_cnt = 0;
-	char c = 0;
-	bool emit = true;
-	libdice_word_t i = 0;
+	libdice_word_t write_cnt = 0;
+	libdice_word_t read_cnt = 0;
 
-	for (i=0; ; i++) {
-		c = c_rd_src_line[i];
-		emit = true;
+	for (read_cnt=0; read_cnt<c_src_len && write_cnt<c_dst_len; ++read_cnt) {
+		const char c = rd_src[read_cnt];
+		bool emit = true;
 
-		switch (*state)
+		switch (*rdwr_state)
 		{
-		case LIBDASM_PP_STATE_LINE_COMMENT:
-		{
-			if (c != '\n') {
+			case LIBDASM_PP_STATE_LINE_COMMENT:
+				if (c != '\n') {
+					emit = false;
+				}
+				break;
+			case LIBDASM_PP_STATE_BLOCK_COMMENT:
 				emit = false;
-			}
-			break;
-		}
-		case LIBDASM_PP_STATE_BLOCK_COMMENT:
-		{
-			emit = false;
-			break;
-		}
-		case LIBDASM_PP_STATE_NORMAL:
-		{
-			if (c == PP_LINE_COMMENT_START || c == PP_BLOCK_COMMENT_START) {
-				emit = false;		
-			}
-			break;
-		}
-		case LIBDASM_PP_STATE_STRING:	/*intentionally fallthrough*/
-		case LIBDASM_PP_STATE_CHAR:	/*intentionally fallthrough*/
-		default:
-			break;
+				break;
+			case LIBDASM_PP_STATE_NORMAL:
+				if (c == PP_LINE_COMMENT_START || c == PP_BLOCK_COMMENT_START) {
+					emit = false;		
+				}
+				break;
+			case LIBDASM_PP_STATE_STRING:	/*intentionally fallthrough*/
+			case LIBDASM_PP_STATE_CHAR:	/*intentionally fallthrough*/
+			default:
+				break;
 		}
 
 		if (c=='\0') {
@@ -141,131 +116,163 @@ static libdice_word_t libdasm_remove_comment(char *dst, const libdice_word_t c_d
 		}
 
 		if (emit) {
-			assert(dst_cnt+1 < c_dst_len);
-			dst[dst_cnt] = c;
-			dst_cnt++;
+			rdwr_dst[write_cnt] = c;
+			write_cnt++;
 		}
-		libdasm_update_pp_state(state, c);
+		*rdwr_state = libdasm_update_pp_state(*rdwr_state, c);
 		
-		if (c == '\n') {
+		if (c=='\n') {
 			break;
 		}
 
 	}
 
-	*read_len = i;
+	*rdwr_read_cnt = read_cnt;
 
-	return dst_cnt;
+	return write_cnt;
 }
 
 
-
-static libdice_word_t libdasm_normalize_line(char *rdwr_dst, const libdice_word_t c_dst_len, const char *c_rd_src_line, libdice_word_t *read_len)
+/**
+ * @brief remove useless whitespace. keep line number
+ */
+static libdice_word_t libdasm_normalize_line(char rdwr_dst[], const libdice_word_t c_dst_len, 
+					const char rd_src[], const libdice_word_t c_src_len,
+					libdice_word_t *rdwr_read_cnt)
 {
-	libdice_word_t dst_cnt = 0;
-	libdice_word_t i = 0;
+	libdice_word_t write_cnt = 0;
+	libdice_word_t read_cnt = 0;
 	bool was_prev_delimiter = false;
 	bool has_non_whitespace = false;	
 
-	char c = 0;
-	for (i=0; ;i++) {
-		c = c_rd_src_line[i];
-		if (c == '\r') {
-			continue;
+	for (read_cnt=0; read_cnt<c_src_len; ++read_cnt) {
+		char c = rd_src[read_cnt];
+		switch (c) 
+		{
+			case '\r':
+				continue;
+			case '\t':
+				c = ' ';
+				break;
+			default:
+				break;
 		}
-		if (c=='\t') {
-			c = ' ';
-		}
+	
 		if (c==' ') {
 			if (was_prev_delimiter) {
 				continue;
 			} else {
 				was_prev_delimiter = true;;
 			}
+			
 		} else {
 			was_prev_delimiter = false;
-		}
-		
-		if (c!=' ' && c!='\n') {
-			has_non_whitespace = true;
+			if (c!='\n') {
+				/* c!=' ' && c!='\n' */
+				has_non_whitespace = true;	
+			}
 		}
 		
 		if (c=='\0') {
+			/* break before copy */
 			break;
 		}
 
-		assert(dst_cnt+1 < c_dst_len);
-		rdwr_dst[dst_cnt] = c;
-		dst_cnt++;
+		if (write_cnt+1 >= c_dst_len) {
+			return LIBDASM_ERR_RET;
+		}
+
+		rdwr_dst[write_cnt] = c;
+		write_cnt++;
 
 		if (c == '\n') {
+			/* break after copy */
 			break;
 		}
 	}
-	*read_len = i;
+	*rdwr_read_cnt = read_cnt;
 
 	if (!has_non_whitespace) {
+		/* current line that we handling does't have 'non whitespace' character */
+		/* Keep '\n' for error message*/
 		rdwr_dst[0] = '\n';
-		dst_cnt = 1;
+		write_cnt = 1;
 	}
 
-	return dst_cnt;
+	return write_cnt;
 }
 
-static libdice_word_t libdasm_remove_comments(char *rdwr_dst, const libdice_word_t c_dst_len, const char *rd_src)
+static libdice_word_t libdasm_remove_comments(char rdwr_dst[], const libdice_word_t c_dst_len, const char rd_src[], const libdice_word_t c_src_len)
 {
-	libdice_word_t tmp_read_len = 0;
-	libdice_word_t tmp_write_len = 0;
-	libdice_word_t pc = 0;
-	libdice_word_t dst_cnt = 0;
-	const size_t rd_src_len = strlen(rd_src)+1;
+	libdice_word_t read_cnt = 0;
+	libdice_word_t write_cnt = 0;
 	enum LIBDASM_PP_STATE_ state = LIBDASM_PP_STATE_NORMAL;
 
-	while (pc < rd_src_len) {
-		tmp_read_len = 0;
-		tmp_write_len = 0;
+	while (read_cnt < c_src_len) {
+		libdice_word_t tmp_read_cnt = 0;
+		libdice_word_t tmp_write_cnt = 0;
 
-		tmp_write_len = libdasm_remove_comment(rdwr_dst+dst_cnt, c_dst_len-dst_cnt, rd_src+pc, &state, &tmp_read_len);
-		assert(dst_cnt + tmp_write_len <= c_dst_len);
-		assert(tmp_read_len > 0);
-		dst_cnt += tmp_write_len;
-		pc += tmp_read_len;
+		tmp_write_cnt = libdasm_remove_comment_from_line(rdwr_dst+write_cnt, c_dst_len-write_cnt, rd_src+read_cnt, c_src_len-read_cnt, &state, &tmp_read_cnt);
+		if (tmp_write_cnt == LIBDASM_ERR_RET) {
+			return LIBDASM_ERR_RET;
+		}
+		if (write_cnt + tmp_write_cnt > c_dst_len) {
+			return LIBDASM_ERR_RET;
+		}
+		
+		assert(tmp_read_cnt > 0);
+		write_cnt += tmp_write_cnt;
+		read_cnt += tmp_read_cnt;
 	}
 
-	assert(dst_cnt+1 <= c_dst_len);
-	rdwr_dst[dst_cnt] = '\0';
-	dst_cnt++;
+	if (write_cnt+1 > c_dst_len) {
+		return LIBDASM_ERR_RET;
+	}
+	
+	rdwr_dst[write_cnt] = '\0';	/* The count was intentionally not incremented.  */
 
-	return dst_cnt;
+	return write_cnt;
 }
 
-static libdice_word_t libdasm_normalize_lines(char *rdwr_dst, const libdice_word_t c_dst_len, const char *rd_src)
+static libdice_word_t libdasm_normalize_lines(char rdwr_dst[], const libdice_word_t c_dst_len, const char rd_src[], const libdice_word_t c_src_len)
 {
-	libdice_word_t tmp_read_len = 0;
-	libdice_word_t tmp_write_len = 0;
-	libdice_word_t pc = 0;
-	libdice_word_t dst_cnt = 0;
-	const size_t c_src_len = strlen(rd_src)+1;
+	libdice_word_t read_cnt = 0;
+	libdice_word_t write_cnt = 0;
 
-	while (pc < c_src_len) {
-		tmp_write_len = libdasm_normalize_line(rdwr_dst+dst_cnt, c_dst_len-dst_cnt, rd_src+pc, &tmp_read_len);
-		assert(dst_cnt + tmp_write_len <= c_dst_len);
-		assert(tmp_read_len > 0);
-		dst_cnt += tmp_write_len;
-		pc += tmp_read_len;
+	while (read_cnt < c_src_len) {
+		libdice_word_t tmp_read_cnt = 0;
+		libdice_word_t tmp_write_cnt = 0;
+
+		tmp_write_cnt = libdasm_normalize_line(rdwr_dst+write_cnt, c_dst_len-write_cnt, rd_src+read_cnt, c_src_len-read_cnt, &tmp_read_cnt);
+		if (tmp_write_cnt == LIBDASM_ERR_RET) {
+			return LIBDASM_ERR_RET;
+		}
+		if (write_cnt + tmp_write_cnt > c_dst_len) {
+			return LIBDASM_ERR_RET;
+		}
+
+		assert(tmp_read_cnt > 0);
+		write_cnt += tmp_write_cnt;
+		read_cnt += tmp_read_cnt;
 	}
 
-	assert(dst_cnt+1 <= c_dst_len);
-	rdwr_dst[dst_cnt] = '\0';
-	dst_cnt++;
+	if (write_cnt+1 > c_dst_len) {
+		return LIBDASM_ERR_RET;
+	}
+	
+	rdwr_dst[write_cnt] = '\0';	/* The count was intentionally not incremented.  */
 
-	return dst_cnt;
+	return write_cnt;
 }
 
-libdice_word_t libdasm_preprocess_programme(char *rdwr_dst, const libdice_word_t c_dst_len, const char *rd_src)
+libdice_word_t libdasm_preprocess_programme(char rdwr_dst[], const libdice_word_t c_dst_len, const char rd_src[], const libdice_word_t c_src_len)
 {
-	char tmp_buf[LIBDASM_PROGRAMME_MAX_LEN] = {0,};
+	char buf[LIBDASM_PROGRAMME_MAX_LEN] = {0,};
+	libdice_word_t buf_cnt = 0;
 
-	libdasm_remove_comments(tmp_buf, LIBDASM_PROGRAMME_MAX_LEN, rd_src);
-	return libdasm_normalize_lines(rdwr_dst, c_dst_len, tmp_buf);
+	buf_cnt = libdasm_remove_comments(buf, LIBDASM_PROGRAMME_MAX_LEN, rd_src, c_src_len);
+	if (buf_cnt == LIBDASM_ERR_RET) {
+		return LIBDASM_ERR_RET;
+	}
+	return libdasm_normalize_lines(rdwr_dst, c_dst_len, buf, c_src_len);
 }
