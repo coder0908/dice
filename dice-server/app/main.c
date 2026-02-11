@@ -43,6 +43,7 @@ int main(int argc, const char** argv) {
 
 	unless(ae2fsys_checksock_naive(SOCK_SVR))
 	{
+		closesocket(SOCK_SVR);
 		assert(0 && "[main]\tsocket failed.");
 		return -1;
 	}
