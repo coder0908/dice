@@ -66,15 +66,15 @@ int main(int argc, const char** argv) {
 				, &SOCKADDR_SVR.m_addr
 				, sizeof(SOCKADDR_SVR.m_in)) < 0)
 	{
+		closesocket(SOCK_SVR);
 		assert(0 && "[main]\tbind failed.");
-		closesocket(AF_INET);
 		return -1;
 	}
 
 	if(listen(SOCK_SVR, 5) < 0)
 	{
+		closesocket(SOCK_SVR);
 		assert(0 && "[main]\tlisten failed.");
-		closesocket(AF_INET);
 		return -1;
 	}
 
