@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <dasm.h>
 
+#include <ctype.h>
 enum e_tokenizer_state {
 	TOKENIZER_STATE_IDLE = 0,
 	TOKENIZER_STATE_IDENT,
@@ -14,20 +15,15 @@ enum e_tokenizer_state {
 	TOKENIZER_STATE_OPERATOR
 };
 
-static bool is_alphabet(const char c_c)
-{
-	return (c_c>='a' && c_c<='z') || (c_c>='A' && c_c<='Z');
-}
-
-static bool is_number(const char c_c)
-{
-	return c_c>='0' && c_c<='9';
-}
+#define	is_alphabet	isalpha
+#define	is_number	isdigit
 
 static void libdasm_init_token_line(struct libdasm_token_line rdwr_tokens[])
 {
 	rdwr_tokens->m_token_cnt = 0;
-	memset(rdwr_tokens->m_tokens, 0, sizeof(struct libdasm_token) * LIBDASM_TOKEN_MAX_CNT_PER_LINE);
+	memset(rdwr_tokens->m_tokens
+			, 0, sizeof(struct libdasm_token) * LIBDASM_TOKEN_MAX_CNT_PER_LINE
+			);
 }
 
 static bool libdasm_create_new_token(struct libdasm_token_line rdwr_tokens[])
@@ -180,7 +176,7 @@ static libdice_word_t libdasm_tokenize_line(struct libdasm_token_line rdwr_token
 					libdasm_insert_token_char(rdwr_tokens, c);
 					read_cnt++;
 					state = TOKENIZER_STATE_IDLE;
-				} else if (char_cnt == 0 && (unsigned char)c < 0x80) {
+				} else if (char_cnt == 0 && isascii(c)) {
 					libdasm_insert_token_char(rdwr_tokens, c);
 					read_cnt++;
 					char_cnt++;

@@ -16,16 +16,17 @@ DICEIMPL libdice_word_t libdasm_assemble(
 		const libdice_word_t					c_programme_len
 		)
 {
-	(void)rdwr_ret_buf;
-	(void)c_ret_buf_len;
-	(void)rd_programme;
-	(void)c_programme_len;
 	char buf[LIBDASM_PROGRAMME_MAX_LEN] = {0,};
 	libdice_word_t buf_cnt = 0;
 	struct libdasm_token_line token_lines[LIBDASM_PROGRAMME_MAX_LEN] = {0,};
 	libdice_word_t token_line_cnt = 0;
 	struct libdasm_parsed_line parsed_lines[LIBDASM_PROGRAMME_MAX_LEN] = {0,};
 	libdice_word_t parsed_line_cnt = 0;
+
+	(void)rdwr_ret_buf;
+	(void)c_ret_buf_len;
+	(void)rd_programme;
+	(void)c_programme_len;
 
 	if (c_programme_len > LIBDASM_PROGRAMME_MAX_LEN) {
 		return LIBDASM_ERR_RET;
