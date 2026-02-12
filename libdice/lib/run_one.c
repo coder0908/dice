@@ -738,7 +738,22 @@ DICEIMPL libdice_ctx libdice_run_one(
 
 		case LIBDICE_OPCODE_RAND:
 		{
-			assert(0 && "noimp: LIBDICE_OPCODE_RAND");
+			libdice_word_t x;
+			__deref(O0, 1);
+
+			ae2f_expected_but_else(O0 < c_num_ram)
+			{
+				c_ctx.m_state = LIBDICE_CTX_DEREFINVAL;
+				return c_ctx;
+			}
+
+			x = rdwr_ram[O0];
+			x ^= x << 13;
+			x ^= x >> 17;
+			x ^= x << 5;
+			rdwr_ram[O0] = x;
+			rdwr_lookup[c_ctx.m_lookup_used + 2] = rdwr_ram[O0];
+
 			c_ctx.m_pc += 3;
 			return c_ctx;
 		}
