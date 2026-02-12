@@ -738,7 +738,9 @@ DICEIMPL libdice_ctx libdice_run_one(
 
 		case LIBDICE_OPCODE_RAND:
 		{
-			char IMPLEMENT_THIS[-1];
+			assert(0 && "noimp: LIBDICE_OPCODE_RAND");
+			c_ctx.m_pc += 3;
+			return c_ctx;
 		}
 	}
 
