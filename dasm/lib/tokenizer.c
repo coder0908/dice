@@ -89,13 +89,14 @@ static enum DASM_TOK_ERR_ dasm_tokenize_line(struct dasm_tok_line rdwr_toks[],
 		switch (state)
 		{
 			case TOKENIZER_STATE_IDLE:
-				if (!dasm_create_new_tok(rdwr_toks)) {
-					goto memory_insufficient;
-				}
+				
 
 				if (c==' ') {
 					read_cnt++;
 				} else if (c=='\n') {
+					if (!dasm_create_new_tok(rdwr_toks)) {
+						goto memory_insufficient;
+					}
 					if (!dasm_insert_tok_char(rdwr_toks, c)) {
 						goto memory_insufficient;
 					}
@@ -105,6 +106,9 @@ static enum DASM_TOK_ERR_ dasm_tokenize_line(struct dasm_tok_line rdwr_toks[],
 					*rdwr_read_cnt = read_cnt; 
 					return DASM_TOK_ERR_OK;
 				} else if (c=='*' || c=='#') {	
+					if (!dasm_create_new_tok(rdwr_toks)) {
+						goto memory_insufficient;
+					}
 					if (!dasm_insert_tok_char(rdwr_toks, c)) {
 						goto memory_insufficient;
 					}
@@ -112,6 +116,9 @@ static enum DASM_TOK_ERR_ dasm_tokenize_line(struct dasm_tok_line rdwr_toks[],
 					state = TOKENIZER_STATE_OPERATOR;
 					read_cnt++;
 				} else if (isalpha((unsigned char)c) || c=='_') {
+					if (!dasm_create_new_tok(rdwr_toks)) {
+						goto memory_insufficient;
+					}
 					if (!dasm_insert_tok_char(rdwr_toks, c)) {
 						goto memory_insufficient;
 					}
@@ -119,6 +126,9 @@ static enum DASM_TOK_ERR_ dasm_tokenize_line(struct dasm_tok_line rdwr_toks[],
 					state = TOKENIZER_STATE_IDENT;
 					read_cnt++;
 				} else if (c=='\"') {
+					if (!dasm_create_new_tok(rdwr_toks)) {
+						goto memory_insufficient;
+					}
 					if (!dasm_insert_tok_char(rdwr_toks, c)) {
 						goto memory_insufficient;
 					}
@@ -126,11 +136,17 @@ static enum DASM_TOK_ERR_ dasm_tokenize_line(struct dasm_tok_line rdwr_toks[],
 					state = TOKENIZER_STATE_STRING;
 					read_cnt++;
 				} else if (c=='\'') {
+					if (!dasm_create_new_tok(rdwr_toks)) {
+						goto memory_insufficient;
+					}
 					dasm_set_tok_type(rdwr_toks, DASM_TOK_TYPE_ASCII);
 					state = TOKENIZER_STATE_ASCII;
 					char_cnt = 0;
 					read_cnt++;
 				} else if (c=='\0') {
+					if (!dasm_create_new_tok(rdwr_toks)) {
+						goto memory_insufficient;
+					}
 					if (!dasm_insert_tok_char(rdwr_toks, c)) {
 						goto memory_insufficient;
 					}
@@ -140,6 +156,9 @@ static enum DASM_TOK_ERR_ dasm_tokenize_line(struct dasm_tok_line rdwr_toks[],
 					*rdwr_read_cnt = read_cnt;
 					return DASM_TOK_ERR_OK;
 				} else if (isdigit((unsigned char)c) || c=='-') {
+					if (!dasm_create_new_tok(rdwr_toks)) {
+						goto memory_insufficient;
+					}
 					if (!dasm_insert_tok_char(rdwr_toks, c)) {
 						goto memory_insufficient;
 					}
@@ -147,6 +166,9 @@ static enum DASM_TOK_ERR_ dasm_tokenize_line(struct dasm_tok_line rdwr_toks[],
 					state = TOKENIZER_STATE_NUMBER;
 					read_cnt++;
 				} else {
+					if (!dasm_create_new_tok(rdwr_toks)) {
+						goto memory_insufficient;
+					}
 					if(!dasm_insert_tok_char(rdwr_toks, c)) {
 						goto memory_insufficient;
 					}

@@ -189,8 +189,9 @@ static void dasm_init_parsed_line(struct dasm_parsed_line *rdwr_parsed_line)
 
 
 static enum DASM_PARSER_ERR_ dasm_parse_operand(struct dasm_operand *rdwr_operand, const struct dasm_tok *rd_tok, 
-		const struct dasm_label_table *rd_label_table)
+		const struct dasm_label_table *rd_label_table, bool *rdwr_is_operand)
 {
+	*rdwr_is_operand = false;
 	switch (rd_tok->m_tok_type) 
 	{
 		case DASM_TOK_TYPE_IDENT:
@@ -204,13 +205,16 @@ static enum DASM_PARSER_ERR_ dasm_parse_operand(struct dasm_operand *rdwr_operan
 					if (tmp >= DASM_TOK_MAX_LEN || tmp<0) {
 						return DASM_PARSER_ERR_INVAL_LABEL;
 					}
+					*rdwr_is_operand = true;
 					return DASM_PARSER_ERR_OK;
 				}
 				/* This tok is opcode */
 				strncpy(rdwr_operand->m_text, rd_tok->m_text, DASM_TOK_MAX_LEN-1);
+				*rdwr_is_operand = true;
 				return DASM_PARSER_ERR_OK;
 			}
 		case DASM_TOK_TYPE_NUMBER:
+			*rdwr_is_operand = true;
 			strncpy(rdwr_operand->m_text, rd_tok->m_text, DASM_TOK_MAX_LEN-1);
 			return DASM_PARSER_ERR_OK;
 		case DASM_TOK_TYPE_LABEL:
@@ -226,17 +230,19 @@ static enum DASM_PARSER_ERR_ dasm_parse_operand(struct dasm_operand *rdwr_operan
 				if (tmp >= DASM_TOK_MAX_LEN || tmp<0) {
 					return DASM_PARSER_ERR_INVAL_ASCII;
 				}
+				*rdwr_is_operand = true;
 				return DASM_PARSER_ERR_OK;
 			}
 		case DASM_TOK_TYPE_OPERATOR:
 			{
 				int tmp = 0;
 				if (rd_tok->m_text[0] == '#') {
-					if (strlen(rdwr_operand->m_text) == 1) {
+					if (strlen(rd_tok->m_text) == 1) {
 						tmp = snprintf(rdwr_operand->m_text, DASM_TOK_MAX_LEN, "%u", (unsigned)0);
 						if (tmp >= DASM_TOK_MAX_LEN || tmp<0) {
 							return DASM_PARSER_ERR_INVAL_OPERATOR;
 						}
+						*rdwr_is_operand = true;
 						return DASM_PARSER_ERR_OK;
 					} else {
 						return DASM_PARSER_ERR_INVAL_OPERATOR;
@@ -246,6 +252,7 @@ static enum DASM_PARSER_ERR_ dasm_parse_operand(struct dasm_operand *rdwr_operan
 				if (tmp >= DASM_TOK_MAX_LEN || tmp<0) {
 					return DASM_PARSER_ERR_INVAL_OPERATOR;
 				}
+				*rdwr_is_operand = true;
 				return DASM_PARSER_ERR_OK;
 			}
 		case DASM_TOK_TYPE_EOL:
@@ -265,6 +272,7 @@ static enum DASM_PARSER_ERR_ dasm_parse_line(struct dasm_parsed_line *rdwr_parse
 	const struct dasm_tok *rd_tok = NULL;
 	libdice_word_t tmp_operand_cnt = 0;
 	enum DASM_PARSER_ERR_ errcode = DASM_PARSER_ERR_OK;
+	bool is_operand = false;
 
 	dasm_init_parsed_line(rdwr_parsed_line);
 
@@ -299,16 +307,17 @@ static enum DASM_PARSER_ERR_ dasm_parse_line(struct dasm_parsed_line *rdwr_parse
 	rdwr_parsed_line->m_operand_cnt = s_opcode_define_table[opcode_table_idx].m_operand_cnt;
 
 	tmp_operand_cnt = 0;
-	for (;tok_line_idx<rd_tok_line->m_tok_cnt; tok_line_idx++) {
+	for (;tok_line_idx<rd_tok_line->m_tok_cnt && tmp_operand_cnt<LIBDICE_OPERAND_MAX_CNT; tok_line_idx++) {
 
 		rd_tok = &(rd_tok_line->m_toks[tok_line_idx]);
 
-		if (tmp_operand_cnt >= LIBDICE_OPERAND_MAX_CNT) {
-			return DASM_PARSER_ERR_INVAL_INSTRUCTION;
+	
+
+		errcode = dasm_parse_operand(&(rdwr_parsed_line->m_operands[tmp_operand_cnt]), rd_tok, rd_label_table, &is_operand);	
+		if (is_operand) {
+			tmp_operand_cnt++;
 		}
 
-		errcode = dasm_parse_operand(&(rdwr_parsed_line->m_operands[tmp_operand_cnt]), rd_tok, rd_label_table);	
-		tmp_operand_cnt++;
 		if (errcode != DASM_PARSER_ERR_OK) {
 			return errcode;
 		}

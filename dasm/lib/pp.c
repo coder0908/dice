@@ -127,6 +127,7 @@ static enum DASM_PP_ERR_ dasm_normalize_line(char rdwr_dst[], const libdice_word
 		}
 
 		if (c == '\n' || c == '\0') {
+			++read_cnt;
 			*rdwr_write_cnt = write_cnt;
 			*rdwr_read_cnt = read_cnt;
 
@@ -170,7 +171,7 @@ static struct dasm_pp_ret dasm_remove_comments(char rdwr_dst[], const libdice_wo
 	while (read_cnt < real_src_len && write_cnt < c_dst_len) {
 		libdice_word_t tmp_read_cnt = 0;
 		libdice_word_t tmp_write_cnt = 0;
-		
+
 		ret.err = dasm_remove_comment_from_line(
 				rdwr_dst + write_cnt
 				, c_dst_len - write_cnt
@@ -206,8 +207,6 @@ static struct dasm_pp_ret dasm_normalize_lines(char rdwr_dst[], const libdice_wo
 	libdice_word_t read_cnt = 0;
 	libdice_word_t write_cnt = 0;
 	libdice_word_t line_cnt = 0;
-
-
 
 	struct dasm_pp_ret ret;
 
@@ -255,11 +254,9 @@ DICEIMPL struct dasm_pp_ret dasm_preprocess_programme(char rdwr_dst[], const lib
 	if (ret.err != DASM_PP_ERR_OK) {
 		return ret;
 	}
-	
 
 	ret = dasm_normalize_lines(rdwr_dst, c_dst_len, buf, buf_cnt,
 					rdwr_write_cnt, &tmp);
-
 	printf("\n\n%u\n\n", tmp);
 	return ret;
 }
