@@ -10,18 +10,6 @@
 
 
 
-#define PARSER_MAX_LABEL_CNT 1000
-
-struct dasm_label {
-	char m_text[DASM_TOK_MAX_LEN];
-	libdice_word_t m_address;
-};
-
-struct dasm_label_table {
-	struct dasm_label m_labels[PARSER_MAX_LABEL_CNT];
-	libdice_word_t m_label_cnt;
-};
-
 struct dasm_opcode_define {
 	const char m_mnemonic[DASM_TOK_MAX_LEN];
 	const enum LIBDICE_OPCODE_ m_opcode;
@@ -102,10 +90,10 @@ static const struct dasm_opcode_define s_opcode_define_table[LIBDICE_OPCODE_CNT]
 };
 
 
-static void dasm_init_label_table(struct dasm_label_table *rdwr_label_table)
+DICEIMPL void dasm_init_label_table(struct dasm_label_table *rdwr_label_table)
 {
 	rdwr_label_table->m_label_cnt = 0;
-	memset(rdwr_label_table->m_labels, 0, sizeof(struct dasm_label) * PARSER_MAX_LABEL_CNT);
+	memset(rdwr_label_table->m_labels, 0, sizeof(struct dasm_label) * rdwr_label_table->m_labels_len);
 }
 
 static bool dasm_get_label_address(const struct dasm_label_table *rd_label_table, const char c_label[], libdice_word_t *addr)
@@ -122,32 +110,37 @@ static bool dasm_get_label_address(const struct dasm_label_table *rd_label_table
 	return false;
 }
 
-static bool dasm_insert_label(struct dasm_label_table *rdwr_label_table, const char c_label[], const libdice_word_t c_addr)
+static enum DASM_PARSER_ERR_ dasm_insert_label(struct dasm_label_table *rdwr_label_table, const char c_label[], const libdice_word_t c_addr)
 {
-	if (rdwr_label_table->m_label_cnt == PARSER_MAX_LABEL_CNT) {
-		return false;
+	if (rdwr_label_table->m_label_cnt == rdwr_label_table->m_labels_len) {
+		return DASM_PARSER_ERR_LABEL_MEM_INSUF;
+	}
+
+	if (strlen(c_label) >= DASM_TOK_MAX_LEN-1) {
+		return DASM_PARSER_ERR_LABEL_MEM_INSUF;
 	}
 
 	strncpy(rdwr_label_table->m_labels[rdwr_label_table->m_label_cnt].m_text, c_label, DASM_TOK_MAX_LEN-1);
 	rdwr_label_table->m_labels[rdwr_label_table->m_label_cnt].m_address = c_addr;
 	rdwr_label_table->m_label_cnt++;
 
-	return true;	
+	return DASM_PARSER_ERR_OK;	
 }
 
-static enum DASM_PARSER_ERR_ dasm_label_programme(struct dasm_label_table *rdwr_label_table, const struct dasm_tok_line rd_tok_lines[], const libdice_word_t c_tok_lines_len)
+static enum DASM_PARSER_ERR_ dasm_label_programme(struct dasm_label_table *rdwr_label_table, 
+	const struct dasm_tok_line rd_tok_lines[], const libdice_word_t c_tok_lines_len, libdice_word_t *rdwr_read_tok_line_cnt)
 {
 	libdice_word_t tok_lines_idx = 0;
 	libdice_word_t tmp = 0;
 	libdice_word_t pc = 0;
+	enum DASM_PARSER_ERR_ errcode = DASM_PARSER_ERR_OK;
 
-	dasm_init_label_table(rdwr_label_table);
-
-	for (tok_lines_idx=0; tok_lines_idx<c_tok_lines_len; tok_lines_idx++) {
+	for (tok_lines_idx=*rdwr_read_tok_line_cnt; tok_lines_idx<c_tok_lines_len; ++tok_lines_idx) {
+		
 		const struct dasm_tok_line *rd_tok_line = &(rd_tok_lines[tok_lines_idx]);
 
 		if (rd_tok_line->m_tok_cnt == 0) {
-			continue;
+			return DASM_PARSER_ERR_NO_TERM;
 		}
 		
 		if (rd_tok_line->m_toks[0].m_tok_type == DASM_TOK_TYPE_LABEL) {
@@ -155,9 +148,13 @@ static enum DASM_PARSER_ERR_ dasm_label_programme(struct dasm_label_table *rdwr_
 			if (dasm_get_label_address(rdwr_label_table, rd_tok_line->m_toks[0].m_text, &tmp)) {
 				return DASM_PARSER_ERR_INVAL_LABEL;
 			}
-			dasm_insert_label(rdwr_label_table, rd_tok_line->m_toks[0].m_text, pc);
+			errcode = dasm_insert_label(rdwr_label_table, rd_tok_line->m_toks[0].m_text, pc);
+			if (errcode != DASM_PARSER_ERR_OK) {
+				return errcode;
+			}
 		}
 		pc += dasm_get_tok_line_word_len(rd_tok_line);
+		*rdwr_read_tok_line_cnt += 1;
 
 		if (rd_tok_line->m_toks[rd_tok_line->m_tok_cnt-1].m_tok_type == DASM_TOK_TYPE_EOP) {
 			return DASM_PARSER_ERR_OK;
@@ -221,10 +218,7 @@ static enum DASM_PARSER_ERR_ dasm_parse_operand(struct dasm_operand *rdwr_operan
 			/* label must be handled by  dasm_parse_line. This means the label was placed in the middle of the line, not at the beginning*/
 			return DASM_PARSER_ERR_INVAL_LABEL;
 		case DASM_TOK_TYPE_STRING:
-			
-				
 			return DASM_PARSER_ERR_INVAL_STRING;
-			
 		case DASM_TOK_TYPE_ASCII:
 			{
 				int tmp = 0;
@@ -278,8 +272,12 @@ static enum DASM_PARSER_ERR_ dasm_parse_line(struct dasm_parsed_line *rdwr_parse
 
 	dasm_init_parsed_line(rdwr_parsed_line);
 
-	if (rd_tok_line->m_tok_cnt == 0 || rd_tok_line->m_tok_cnt >= DASM_TOK_MAX_CNT_PER_LINE) {
+	if (rd_tok_line->m_tok_cnt == 0) {
 		return DASM_PARSER_ERR_NO_TERM;
+	}
+
+	if (rd_tok_line->m_tok_cnt >= DASM_TOK_MAX_CNT_PER_LINE) {
+		return DASM_PARSER_ERR_INVAL_INSTRUCTION;
 	}
 
 	if (rd_tok_line->m_tok_cnt==1
@@ -309,11 +307,9 @@ static enum DASM_PARSER_ERR_ dasm_parse_line(struct dasm_parsed_line *rdwr_parse
 	rdwr_parsed_line->m_operand_cnt = s_opcode_define_table[opcode_table_idx].m_operand_cnt;
 
 	tmp_operand_cnt = 0;
-	for (;tok_line_idx<rd_tok_line->m_tok_cnt && tmp_operand_cnt<LIBDICE_OPERAND_MAX_CNT; tok_line_idx++) {
+	for (;tok_line_idx+1<rd_tok_line->m_tok_cnt && tmp_operand_cnt<LIBDICE_OPERAND_MAX_CNT; ++tok_line_idx) {
 
-		rd_tok = &(rd_tok_line->m_toks[tok_line_idx]);
-
-	
+		rd_tok = &(rd_tok_line->m_toks[tok_line_idx]);	
 
 		errcode = dasm_parse_operand(&(rdwr_parsed_line->m_operands[tmp_operand_cnt]), rd_tok, rd_label_table, &is_operand);	
 		if (is_operand) {
@@ -324,6 +320,11 @@ static enum DASM_PARSER_ERR_ dasm_parse_line(struct dasm_parsed_line *rdwr_parse
 			return errcode;
 		}
 	}
+
+	if ((rd_tok_line->m_toks[rd_tok_line->m_tok_cnt-1].m_tok_type != DASM_TOK_TYPE_EOL) && (rd_tok_line->m_toks[rd_tok_line->m_tok_cnt-1].m_tok_type != DASM_TOK_TYPE_EOP)) {
+		return DASM_PARSER_ERR_NO_TERM;
+	}
+	
 	if (tmp_operand_cnt != rdwr_parsed_line->m_operand_cnt) {
 		return DASM_PARSER_ERR_INVAL_INSTRUCTION;
 	}	
@@ -331,34 +332,27 @@ static enum DASM_PARSER_ERR_ dasm_parse_line(struct dasm_parsed_line *rdwr_parse
 } 
 
 
-DICEIMPL struct dasm_parser_ret dasm_parse_programme(struct dasm_parsed_line rdwr_parsed_lines[], const libdice_word_t c_parsed_lines_len, 
+DICEIMPL enum DASM_PARSER_ERR_ dasm_parse_programme(struct dasm_parsed_line rdwr_parsed_lines[], const libdice_word_t c_parsed_lines_len, 
 		const struct dasm_tok_line rd_tok_lines[], const libdice_word_t c_tok_lines_len,
-		libdice_word_t *rdwr_parsed_line_cnt)
+		struct dasm_label_table *rdwr_label_table, struct dasm_parser_status *rdwr_status)
 {
-	libdice_word_t line_cnt = 0;
-	libdice_word_t parsed_line_cnt = 0;
-	libdice_word_t tok_line_cnt = 0;
-	struct dasm_label_table label_table;
-	struct dasm_parser_ret ret;
+	enum DASM_PARSER_ERR_ errcode = DASM_PARSER_ERR_OK;
 
-	dasm_init_label_table(&label_table);
-	ret.m_err = dasm_label_programme(&label_table, rd_tok_lines, c_tok_lines_len);
-	if (ret.m_err != DASM_PARSER_ERR_OK) {
-		*rdwr_parsed_line_cnt = 0;
-		return ret;
+	errcode = dasm_label_programme(rdwr_label_table, rd_tok_lines, c_tok_lines_len, &(rdwr_status->m_read_tok_line_cnt_for_label_table));
+	if (errcode != DASM_PARSER_ERR_OK) {
+		return errcode;
 	}
 
-	for (tok_line_cnt=0; parsed_line_cnt<c_parsed_lines_len && tok_line_cnt<c_tok_lines_len; ++tok_line_cnt) {
-		ret.m_err = dasm_parse_line(&rdwr_parsed_lines[parsed_line_cnt], &rd_tok_lines[tok_line_cnt], &label_table);
-		parsed_line_cnt++;
-		line_cnt++;
-		if (ret.m_err != DASM_PARSER_ERR_OK) {
+	while (rdwr_status->m_write_parsed_line_cnt<c_parsed_lines_len && rdwr_status->m_read_tok_line_cnt<c_tok_lines_len) {
+		errcode = dasm_parse_line(&rdwr_parsed_lines[rdwr_status->m_write_parsed_line_cnt], &rd_tok_lines[rdwr_status->m_read_tok_line_cnt], rdwr_label_table);
+		
+		if (errcode != DASM_PARSER_ERR_OK) {
 			break;
 		}
-	}
-	
-	*rdwr_parsed_line_cnt = parsed_line_cnt;
-	ret.m_line_cnt = line_cnt;
 
-	return ret;
+		rdwr_status->m_write_parsed_line_cnt++;
+		rdwr_status->m_read_tok_line_cnt++;
+	}
+
+	return errcode;
 }

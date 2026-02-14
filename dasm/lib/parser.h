@@ -7,6 +7,20 @@
 #include <ae2f/c90/StdBool.h>
 #include "./tokenizer.h"
 
+#define DASM_LABEL_MAX_LEN 64
+#define DASM_OPERAND_MAX_LEN 64
+
+struct dasm_label {
+	char m_text[DASM_LABEL_MAX_LEN];
+	libdice_word_t m_address;
+};
+
+struct dasm_label_table {
+	struct dasm_label *m_labels;
+	libdice_word_t m_labels_len;
+	libdice_word_t m_label_cnt;
+};
+
 enum DASM_PARSER_ERR_ {
 	DASM_PARSER_ERR_OK,
 	DASM_PARSER_ERR_MEM_INSUF,
@@ -18,16 +32,18 @@ enum DASM_PARSER_ERR_ {
 	DASM_PARSER_ERR_INVAL_STRING,
 	DASM_PARSER_ERR_INVAL_OPCODE,
 	DASM_PARSER_ERR_INVAL_INSTRUCTION,
+	DASM_PARSER_ERR_LABEL_MEM_INSUF,		/* TODO :  */
 	DASM_PARSER_ERR_UNKNOWN
 };
 
-struct dasm_parser_ret {
-	enum DASM_PARSER_ERR_ m_err;
-	libdice_word_t m_line_cnt;
+struct dasm_parser_status {
+	libdice_word_t m_read_tok_line_cnt_for_label_table;
+	libdice_word_t m_read_tok_line_cnt;
+	libdice_word_t m_write_parsed_line_cnt;
 };
 
 struct dasm_operand {
-	char m_text[DASM_TOK_MAX_LEN];
+	char m_text[DASM_OPERAND_MAX_LEN];
 };
 
 struct dasm_parsed_line {
@@ -35,11 +51,11 @@ struct dasm_parsed_line {
 	struct dasm_operand m_operands[LIBDICE_OPERAND_MAX_CNT];
 	libdice_word_t m_operand_cnt;
 };
-/** 
- * @param rdwr_parsed_line_cnt out
- * */
-DICECALL struct dasm_parser_ret dasm_parse_programme(struct dasm_parsed_line rdwr_parsed_lines[], const libdice_word_t c_parsed_lines_len, 
-					const struct dasm_tok_line rd_tok_lines[], const libdice_word_t c_tok_lines_len,
-					libdice_word_t *rdwr_parsed_line_cnt);
+
+DICECALL  void dasm_init_label_table(struct dasm_label_table *rdwr_label_table);
+
+DICECALL enum DASM_PARSER_ERR_ dasm_parse_programme(struct dasm_parsed_line rdwr_parsed_lines[], const libdice_word_t c_parsed_lines_len, 
+		const struct dasm_tok_line rd_tok_lines[], const libdice_word_t c_tok_lines_len,
+		struct dasm_label_table *rdwr_label_table, struct dasm_parser_status *rdwr_status);
 
 #endif /* dasm_parser_h */

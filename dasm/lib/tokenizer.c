@@ -21,13 +21,13 @@ static void dasm_init_tok_line(struct dasm_tok_line rdwr_toks[])
 {
 	rdwr_toks->m_tok_cnt = 0;
 	memset(rdwr_toks->m_toks
-			, 0, sizeof(struct dasm_tok) * DASM_TOK_MAX_CNT_PER_LINE
+			, 0, sizeof(struct dasm_tok) * rdwr_toks->m_toks_len
 	      );
 }
 
 static bool dasm_create_new_tok(struct dasm_tok_line rdwr_toks[])
 {
-	if (rdwr_toks->m_tok_cnt == DASM_TOK_MAX_CNT_PER_LINE) {
+	if (rdwr_toks->m_tok_cnt == rdwr_toks->m_toks_len) {
 		return false;
 	}
 
@@ -76,7 +76,7 @@ static inline bool dasm_set_tok_type(struct dasm_tok_line rdwr_toks[], const enu
 
 static enum DASM_TOK_ERR_ dasm_tokenize_line(struct dasm_tok_line rdwr_toks[], 
 		const char rd_src[], const libdice_word_t c_src_len,
-		libdice_word_t *rdwr_read_cnt)
+		libdice_word_t *rdwr_read_char_cnt)
 {
 	libdice_word_t read_cnt = 0;
 	enum e_tokenizer_state state = TOKENIZER_STATE_IDLE;
@@ -84,31 +84,27 @@ static enum DASM_TOK_ERR_ dasm_tokenize_line(struct dasm_tok_line rdwr_toks[],
 
 	dasm_init_tok_line(rdwr_toks);
 
-	for (read_cnt=0;  read_cnt<c_src_len;) {
+	for (read_cnt=0; rdwr_toks->m_tok_cnt<rdwr_toks->m_toks_len && read_cnt<c_src_len;) {
 		const char c = rd_src[read_cnt];
 		switch (state)
 		{
 			case TOKENIZER_STATE_IDLE:
-
-
 				if (c==' ') {
 					read_cnt++;
 				} else if (c=='\n') {
-					if (!dasm_create_new_tok(rdwr_toks)) {
-						goto memory_insufficient;
-					}
+					dasm_create_new_tok(rdwr_toks);
+					
 					if (!dasm_insert_tok_char(rdwr_toks, c)) {
 						goto memory_insufficient;
 					}
 					dasm_set_tok_type(rdwr_toks, DASM_TOK_TYPE_EOL);
 					read_cnt++;
 
-					*rdwr_read_cnt = read_cnt; 
+					*rdwr_read_char_cnt = read_cnt; 
 					return DASM_TOK_ERR_OK;
 				} else if (c=='*' || c=='#') {	
-					if (!dasm_create_new_tok(rdwr_toks)) {
-						goto memory_insufficient;
-					}
+					dasm_create_new_tok(rdwr_toks);
+					
 					if (!dasm_insert_tok_char(rdwr_toks, c)) {
 						goto memory_insufficient;
 					}
@@ -116,9 +112,8 @@ static enum DASM_TOK_ERR_ dasm_tokenize_line(struct dasm_tok_line rdwr_toks[],
 					state = TOKENIZER_STATE_OPERATOR;
 					read_cnt++;
 				} else if (isalpha((unsigned char)c) || c=='_') {
-					if (!dasm_create_new_tok(rdwr_toks)) {
-						goto memory_insufficient;
-					}
+					dasm_create_new_tok(rdwr_toks);
+					
 					if (!dasm_insert_tok_char(rdwr_toks, c)) {
 						goto memory_insufficient;
 					}
@@ -126,36 +121,32 @@ static enum DASM_TOK_ERR_ dasm_tokenize_line(struct dasm_tok_line rdwr_toks[],
 					state = TOKENIZER_STATE_IDENT;
 					read_cnt++;
 				} else if (c=='\"') {
-					if (!dasm_create_new_tok(rdwr_toks)) {
-						goto memory_insufficient;
-					}
+					dasm_create_new_tok(rdwr_toks);
+					
 					dasm_set_tok_type(rdwr_toks, DASM_TOK_TYPE_STRING);
 					state = TOKENIZER_STATE_STRING;
 					read_cnt++;
 				} else if (c=='\'') {
-					if (!dasm_create_new_tok(rdwr_toks)) {
-						goto memory_insufficient;
-					}
+					dasm_create_new_tok(rdwr_toks);
+					
 					dasm_set_tok_type(rdwr_toks, DASM_TOK_TYPE_ASCII);
 					state = TOKENIZER_STATE_ASCII;
 					char_cnt = 0;
 					read_cnt++;
 				} else if (c=='\0') {
-					if (!dasm_create_new_tok(rdwr_toks)) {
-						goto memory_insufficient;
-					}
+					dasm_create_new_tok(rdwr_toks);
+					
 					if (!dasm_insert_tok_char(rdwr_toks, c)) {
 						goto memory_insufficient;
 					}
 					dasm_set_tok_type(rdwr_toks, DASM_TOK_TYPE_EOP);
 					read_cnt++;
 
-					*rdwr_read_cnt = read_cnt;
+					*rdwr_read_char_cnt = read_cnt;
 					return DASM_TOK_ERR_OK;
 				} else if (isdigit((unsigned char)c) || c=='-') {
-					if (!dasm_create_new_tok(rdwr_toks)) {
-						goto memory_insufficient;
-					}
+					dasm_create_new_tok(rdwr_toks);
+					
 					if (!dasm_insert_tok_char(rdwr_toks, c)) {
 						goto memory_insufficient;
 					}
@@ -164,7 +155,7 @@ static enum DASM_TOK_ERR_ dasm_tokenize_line(struct dasm_tok_line rdwr_toks[],
 					read_cnt++;
 				} else {
 
-					*rdwr_read_cnt = read_cnt;
+					*rdwr_read_char_cnt = read_cnt;
 					return DASM_TOK_ERR_INVAL_CHAR;
 				}
 				break;
@@ -194,7 +185,7 @@ static enum DASM_TOK_ERR_ dasm_tokenize_line(struct dasm_tok_line rdwr_toks[],
 				break;
 			case TOKENIZER_STATE_STRING:
 				if (c == '\n' || c == '\0') {
-					*rdwr_read_cnt = read_cnt;
+					*rdwr_read_char_cnt = read_cnt;
 					return DASM_TOK_ERR_INVAL_STRING;
 				}
 				/* TODO : escape sequence handling  */
@@ -219,7 +210,7 @@ static enum DASM_TOK_ERR_ dasm_tokenize_line(struct dasm_tok_line rdwr_toks[],
 					read_cnt++;
 					char_cnt++;
 				} else {
-					*rdwr_read_cnt = read_cnt;
+					*rdwr_read_char_cnt = read_cnt;
 					return DASM_TOK_ERR_INVAL_ASCII;		/* not 1 character or Non ascii */
 				}
 				break;
@@ -234,24 +225,25 @@ static enum DASM_TOK_ERR_ dasm_tokenize_line(struct dasm_tok_line rdwr_toks[],
 				}
 				break;
 			default:
-				*rdwr_read_cnt = read_cnt;
+				*rdwr_read_char_cnt = read_cnt;
 				return DASM_TOK_ERR_UNKNOWN;	
 		}
 
 
 	}
 
-	*rdwr_read_cnt = read_cnt;
+	*rdwr_read_char_cnt = read_cnt;
 
 	if (read_cnt == c_src_len) {
 		return DASM_TOK_ERR_NO_TERM;
 	}
 
-	return DASM_TOK_ERR_UNKNOWN;
-
+	if (rdwr_toks->m_tok_cnt == DASM_TOK_MAX_CNT_PER_LINE) {
 memory_insufficient:
-	*rdwr_read_cnt = read_cnt;
-	return DASM_TOK_ERR_MEM_INSUF;
+		return DASM_TOK_ERR_MEM_INSUF;
+	}
+
+	return DASM_TOK_ERR_UNKNOWN;
 }
 
 
@@ -285,22 +277,24 @@ DICEIMPL enum DASM_TOK_ERR_  dasm_tokenize_programme(struct dasm_tok_line rdwr_t
 		real_src_len = c_src_len;
 	}
 
-	while (rdwr_status->tok_line_cnt < c_tok_lines_len && rdwr_status->read_cnt < real_src_len) {
-		libdice_word_t tmp_read_cnt = 0;
+	while (rdwr_status->m_write_tok_line_cnt < c_tok_lines_len && rdwr_status->m_read_char_cnt < real_src_len) {
+		libdice_word_t tmp_read_char_cnt = 0;
 
-		errcode = dasm_tokenize_line(&rdwr_tok_lines[rdwr_status->tok_line_cnt], &rd_src[rdwr_status->read_cnt],
-				real_src_len-rdwr_status->read_cnt, &tmp_read_cnt);
+		errcode = dasm_tokenize_line(&rdwr_tok_lines[rdwr_status->m_write_tok_line_cnt], &rd_src[rdwr_status->m_read_char_cnt],
+				real_src_len-rdwr_status->m_read_char_cnt, &tmp_read_char_cnt);
 
 		if (errcode != DASM_TOK_ERR_OK) {
 			break;
 		}
 
-		if (rdwr_tok_lines[rdwr_status->tok_line_cnt].m_tok_cnt) {	
-			rdwr_status->tok_line_cnt++;
+		if (rdwr_tok_lines[rdwr_status->m_write_tok_line_cnt].m_tok_cnt == 0) {	
+			assert(0);
+			return DASM_TOK_ERR_UNKNOWN;
 		}
-
-
-		rdwr_status->read_cnt += tmp_read_cnt;
+		
+		rdwr_status->m_write_tok_line_cnt++;
+		rdwr_status->m_read_char_cnt += tmp_read_char_cnt;
+		rdwr_status->m_read_line_cnt++;
 
 	}
 

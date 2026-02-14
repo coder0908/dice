@@ -64,19 +64,21 @@ int main(void)
 	
 	libdice_word_t exe[DASM_PROGRAMME_MAX_LEN] = {0,};
 	libdice_word_t exe_cnt = 0;
-
+	volatile libdice_word_t i = 0;
 	char asm_programme[DASM_PROGRAMME_MAX_LEN] = PROGRAMME0;
+
 	exe_cnt = dasm_assemble(exe, DASM_PROGRAMME_MAX_LEN, asm_programme, DASM_PROGRAMME_MAX_LEN);
+	
 	if (exe_cnt == DASM_ERR_RET) {
 		printf("Syntax error\n");
 		return 0;
 	}
+	for (i=0; i<exe_cnt; ++i) {
+		printf("%u, ", exe[i]);
+	}
 
 	printf("exe_cnt = %u\n", exe_cnt);
 
-	for (libdice_word_t i=0; i<exe_cnt; ++i) {
-		printf("%u ", exe[i]);
-	}
 
 	printf("\n");
 

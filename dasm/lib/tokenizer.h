@@ -46,7 +46,8 @@ struct dasm_tok {
 };
 
 struct dasm_tok_line {
-	struct dasm_tok m_toks[DASM_TOK_MAX_CNT_PER_LINE];
+	struct dasm_tok *m_toks;
+	libdice_word_t m_toks_len;
 	libdice_word_t m_tok_cnt;
 };
 
@@ -54,17 +55,16 @@ struct dasm_tok_status {
 	/** 
 	 * @brief Read line count without error line
 	 * */
-	libdice_word_t read_line_cnt;
+	libdice_word_t m_read_line_cnt;
 	/** 
 	 * @brief Read count without error character 
 	 * */
-	libdice_word_t read_cnt;
-	libdice_word_t tok_line_cnt;
+	libdice_word_t m_read_char_cnt;
+	libdice_word_t m_write_tok_line_cnt;
 };
 
-
-DICECALL enum DASM_TOK_TYPE_ dasm_tokenize_programme(struct dasm_tok_line rdwr_tok_lines[], const libdice_word_t c_dst_len,
-		const char rd_src[], const libdice_word_t c_src_len, struct dasm_tok_status *status);
+DICECALL enum DASM_TOK_ERR_ dasm_tokenize_programme(struct dasm_tok_line rdwr_tok_lines[], const libdice_word_t c_dst_len,
+		const char rd_src[], const libdice_word_t c_src_len, struct dasm_tok_status *rdwr_status);
 DICECALL libdice_word_t dasm_get_tok_line_word_len(const struct dasm_tok_line *rd_tok_line);
 
 
