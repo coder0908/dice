@@ -17,13 +17,14 @@ enum DASM_PP_ERR_ {
 	DASM_PP_ERR_UNCLOSED_BLOCK_COMMENT
 };
 
-struct dasm_pp_ret {
-	enum DASM_PP_ERR_ m_err;
-	libdice_word_t m_line_cnt;
+struct dasm_pp_status {
+	libdice_word_t m_read_line_cnt;
+	libdice_word_t m_read_char_cnt;
+	libdice_word_t m_write_char_cnt;
 };
 
-DICECALL struct dasm_pp_ret dasm_preprocess_programme(char rdwr_dst[], const libdice_word_t c_dst_len,
+DICECALL enum DASM_PP_ERR_ dasm_preprocess_programme(char rdwr_dst[], const libdice_word_t c_dst_len,
 		const char rd_src[], const libdice_word_t c_src_len,
-		libdice_word_t *rdwr_write_cnt);
+		struct dasm_pp_status *rdwr_status);
 
 #endif /* dasm_pp_h */

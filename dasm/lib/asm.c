@@ -18,14 +18,15 @@ DICEIMPL libdice_word_t dasm_assemble(
 		ae2f_LP(c_num_ret) libdice_word_t* ae2f_restrict	rdwr_ret_buf,
 		const libdice_word_t					c_ret_buf_len,
 		ae2f_LP(str_len) const char* ae2f_restrict		rd_programme,
-		const libdice_word_t					c_programme_len
-		)
+		const libdice_word_t					c_programme_len,
+		struct label_table *rdwr_label_table)
 {
-	struct dasm_pp_ret pp_ret;
+	struct dasm_pp_status pp_status = {0,};
 	struct dasm_tok_status tok_status = {0,};
 	struct dasm_parser_status parser_status = {0,};
 	struct dasm_asm_status asm_status = {0,};
-
+	
+	enum DASM_PP_ERR_ pp_errcode;
 	enum DASM_TOK_ERR_ tok_errcode;
 	enum DASM_PARSER_ERR_ parser_errcode;
 	enum DASM_ASM_ERR_ asm_errcode;
@@ -68,7 +69,7 @@ DICEIMPL libdice_word_t dasm_assemble(
 		return DASM_ERR_RET;
 	}
 
-	pp_ret = dasm_preprocess_programme(preprocessed_programme, DASM_PROGRAMME_MAX_LEN, rd_programme, c_programme_len, &preprocessed_programme_cnt);
+	pp_ret = dasm_preprocess_prog	ramme(preprocessed_programme, DASM_PROGRAMME_MAX_LEN, rd_programme, c_programme_len, &preprocessed_programme_cnt);
 	if (pp_ret.m_err != DASM_PP_ERR_OK) {
 		free(tok_bufs);
 		free(label_table.m_labels);

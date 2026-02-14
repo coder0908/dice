@@ -5,21 +5,10 @@
 #include <libdice/type.h>
 #include <libdice/opcode.h>
 #include <ae2f/c90/StdBool.h>
+#include "label.h"
 #include "./tokenizer.h"
 
-#define DASM_LABEL_MAX_LEN 64
 #define DASM_OPERAND_MAX_LEN 64
-
-struct dasm_label {
-	char m_text[DASM_LABEL_MAX_LEN];
-	libdice_word_t m_address;
-};
-
-struct dasm_label_table {
-	struct dasm_label *m_labels;
-	libdice_word_t m_labels_len;
-	libdice_word_t m_label_cnt;
-};
 
 enum DASM_PARSER_ERR_ {
 	DASM_PARSER_ERR_OK,
@@ -32,7 +21,7 @@ enum DASM_PARSER_ERR_ {
 	DASM_PARSER_ERR_INVAL_STRING,
 	DASM_PARSER_ERR_INVAL_OPCODE,
 	DASM_PARSER_ERR_INVAL_INSTRUCTION,
-	DASM_PARSER_ERR_LABEL_MEM_INSUF,		/* TODO :  */
+	DASM_PARSER_ERR_LABEL_MEM_INSUF,
 	DASM_PARSER_ERR_UNKNOWN
 };
 
