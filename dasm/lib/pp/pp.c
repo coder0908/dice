@@ -106,6 +106,7 @@ static ae2f_inline enum DASM_ERR_ dasm_pp_execute_line(struct dasm_pp *rdwr_pp)
 				rdwr_pp->m_state = DASM_PP_STATE_LINE_COMMENT;
 				break;
 			case '}':
+				rdwr_pp->m_src_cnt--;
 				return DASM_ERR_INVAL_COMMENT;
 			case '\"':
 				rdwr_pp->m_dst[rdwr_pp->m_dst_cnt++] = ch;
@@ -160,6 +161,7 @@ static ae2f_inline enum DASM_ERR_ dasm_pp_execute_line(struct dasm_pp *rdwr_pp)
 			switch (ch) {
 			case '\n':
 			case '\0':
+				rdwr_pp->m_src_cnt--;
 				return DASM_ERR_INVAL_STRING_IMM;
 			case '\"':
 				rdwr_pp->m_dst[rdwr_pp->m_dst_cnt++] = ch;

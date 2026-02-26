@@ -284,7 +284,6 @@ static ae2f_inline enum DASM_ERR_ dasm_lexer_execute_line(struct dasm_lexer *rdw
 
 			case '\n':
 			case '\0':
-				rdwr_lexer->m_src_cnt++;
 				return DASM_ERR_INVAL_CHAR_IMM;
 			default:
 				dasm_tok_stream_increase_lexeme_len(&rdwr_lexer->m_tok_stream, 1);
@@ -305,7 +304,6 @@ static ae2f_inline enum DASM_ERR_ dasm_lexer_execute_line(struct dasm_lexer *rdw
 
 			case '\n':
 			case '\0':
-				rdwr_lexer->m_src_cnt++;
 				return DASM_ERR_INVAL_STRING_IMM;
 			default:
 
@@ -327,7 +325,6 @@ static ae2f_inline enum DASM_ERR_ dasm_lexer_execute_line(struct dasm_lexer *rdw
 			break;
 
 		default:
-			rdwr_lexer->m_src_cnt++;
 			return DASM_ERR_UNKNOWN;
 		}
 	}
