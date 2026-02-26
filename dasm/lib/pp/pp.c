@@ -1,5 +1,6 @@
 #include <ae2f/cc.h>
 #include "pp.h"
+#include "dasm/err.h"
 
 DICEIMPL bool dasm_pp_init(struct dasm_pp *rdwr_pp, 
 	char rdwr_dst[], const libdice_word_t c_dst_len,
@@ -106,6 +107,10 @@ static ae2f_inline enum DASM_ERR_ dasm_pp_execute_line(struct dasm_pp *rdwr_pp)
 				break;
 			case '}':
 				return DASM_ERR_INVAL_COMMENT;
+			case '\"':
+				rdwr_pp->m_dst[rdwr_pp->m_dst_cnt++] = ch;
+				rdwr_pp->m_state = DASM_PP_STATE_STRING_IMM;
+				break;
 			case '\r':
 				break;
 			case '\n':
@@ -150,6 +155,20 @@ static ae2f_inline enum DASM_ERR_ dasm_pp_execute_line(struct dasm_pp *rdwr_pp)
 			default:
 				break;
 			}
+			break;
+		case DASM_PP_STATE_STRING_IMM:
+			switch (ch) {
+			case '\n':
+			case '\0':
+				return DASM_ERR_INVAL_STRING_IMM;
+			case '\"':
+				rdwr_pp->m_dst[rdwr_pp->m_dst_cnt++] = ch;
+				rdwr_pp->m_state = DASM_PP_STATE_NORMAL;
+				break;
+			default:
+				rdwr_pp->m_dst[rdwr_pp->m_dst_cnt++] = ch;
+				break;
+			}			
 			break;
 		default:
 			return DASM_ERR_UNKNOWN;

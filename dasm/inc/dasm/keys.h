@@ -1,10 +1,10 @@
-#ifndef	dasm_keys_h
-#define	dasm_keys_h
+#ifndef dasm_keys_h
+#define dasm_keys_h
 
-#define DASM_MNEMONIC_MAX_LEN
-#define DASM_MNEMONIC_CNT	54
+#define DASM_MNEMONIC_CNT     53
 
 #define DASM_MNEMONIC_NOP        "nop"
+
 #define DASM_MNEMONIC_IADD       "iadd"
 #define DASM_MNEMONIC_ISUB       "isub"
 #define DASM_MNEMONIC_IMUL       "imul"
@@ -68,9 +68,8 @@
 #define DASM_MNEMONIC_DEF        "def"
 #define DASM_MNEMONIC_UNDEF      "undef"
 
-#define DASM_MNEMONIC_SETRANDSEED "setrandseed"
-#define DASM_MNEMONIC_IRAND      "irand"
-#define DASM_MNEMONIC_FRAND      "frand"
+#define DASM_MNEMONIC_RAND       "rand"
+#define DASM_MNEMONIC_TIME       "time"
 
 #define DASM_MNEMONIC_EOP        "eop"
 
