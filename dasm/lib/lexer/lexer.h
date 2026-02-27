@@ -42,13 +42,7 @@ struct dasm_lexer {
 DICECALL bool dasm_lexer_init(struct dasm_lexer *rdwr_lexer, struct dasm_tok rdwr_toks[],
 	const libdice_word_t c_toks_len, const char rd_src[], const libdice_word_t c_src_len);
 
-/**
- * @brief 
- * 
- * @param rdwr_lexer 
- * @return bool Returns true on success and false on failure.
- */
-DICECALL bool dasm_lexer_deinit(struct dasm_lexer *rdwr_lexer);
+DICECALL void dasm_lexer_deinit(struct dasm_lexer *rdwr_lexer);
 
 DICECALL enum DASM_ERR_ dasm_lexer_execute(struct dasm_lexer *rdwr_lexer);
 

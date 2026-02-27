@@ -76,17 +76,15 @@ static bool dasm_tok_init(struct dasm_tok *rdwr_tok)
 	return true;
 }
 
-static bool dasm_tok_deinit(struct dasm_tok *rdwr_tok)
+static void dasm_tok_deinit(struct dasm_tok *rdwr_tok)
 {
 	if (!rdwr_tok) {
-		return false;
+		return;
 	}
 
 	rdwr_tok->m_lexeme = NULL;
 	rdwr_tok->m_lexeme_len = 0;
 	rdwr_tok->m_tok_type = DASM_TOK_TYPE_EOP;
-
-	return true;
 }
 
 DICEIMPL bool dasm_tok_stream_init(struct dasm_tok_stream *rdwr_tstream, 
@@ -105,7 +103,7 @@ DICEIMPL bool dasm_tok_stream_init(struct dasm_tok_stream *rdwr_tstream,
 
 	for (i=0; i<c_toks_len; ++i) {
 		if (!dasm_tok_init(&rdwr_tstream->m_toks[i])) {
-			(void)dasm_tok_stream_deinit(rdwr_tstream);
+			dasm_tok_stream_deinit(rdwr_tstream);
 			return false;
 		}
 	}
@@ -113,21 +111,18 @@ DICEIMPL bool dasm_tok_stream_init(struct dasm_tok_stream *rdwr_tstream,
 	return true;
 }
 
-DICEIMPL bool dasm_tok_stream_deinit(struct dasm_tok_stream *rdwr_tstream)
+DICEIMPL void dasm_tok_stream_deinit(struct dasm_tok_stream *rdwr_tstream)
 {
 	libdice_word_t i;
 
 	if (!rdwr_tstream) {
-		return false;
+		return;
 	}
 
 	for (i=0; i<rdwr_tstream->m_tok_cnt; ++i) {
-		if (!dasm_tok_deinit(&rdwr_tstream->m_toks[i])) {
-			return false;
-		}
+		dasm_tok_deinit(&rdwr_tstream->m_toks[i]);
+		
 	}
-
-	return true;
 }
 
 DICEIMPL bool dasm_tok_stream_append(struct dasm_tok_stream *rdwr_tstream)

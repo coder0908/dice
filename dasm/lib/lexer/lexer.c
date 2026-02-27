@@ -22,21 +22,19 @@ DICEIMPL bool dasm_lexer_init(struct dasm_lexer *rdwr_lexer, struct dasm_tok rdw
 	return dasm_tok_stream_init(&rdwr_lexer->m_tok_stream, rdwr_toks, c_toks_len);
 }
 
-DICEIMPL bool dasm_lexer_deinit(struct dasm_lexer *rdwr_lexer)
+DICEIMPL void dasm_lexer_deinit(struct dasm_lexer *rdwr_lexer)
 {
 	if (!rdwr_lexer) {
-		return false;	/** NRE */
+		return;
 	}
 
 	rdwr_lexer->m_src = NULL;
 	rdwr_lexer->m_src_len = 0;
 	rdwr_lexer->m_src_cnt = 0;
-
-	dasm_tok_stream_deinit(&rdwr_lexer->m_tok_stream);
-
+	
 	rdwr_lexer->m_state = DASM_LEXER_STATE_IDLE;
-
-	return true;
+	
+	dasm_tok_stream_deinit(&rdwr_lexer->m_tok_stream);
 }
 
 static ae2f_inline enum DASM_ERR_ dasm_lexer_execute_line(struct dasm_lexer *rdwr_lexer)
@@ -45,11 +43,12 @@ static ae2f_inline enum DASM_ERR_ dasm_lexer_execute_line(struct dasm_lexer *rdw
 	libdice_word_t char_verification_cnt = 0;
 
 	if (!(rdwr_lexer && rdwr_lexer->m_src)) {
-		return DASM_ERR_UNKNOWN;	/** NRE */
+		return DASM_ERR_UNKNOWN;
 	}
 
 	while (rdwr_lexer->m_tok_stream.m_tok_cnt < rdwr_lexer->m_tok_stream.m_toks_len
 		&& rdwr_lexer->m_src_cnt < rdwr_lexer->m_src_len) {
+
 		const char * const lexeme = &(rdwr_lexer->m_src[rdwr_lexer->m_src_cnt]);
 		const char ch = lexeme[0];
 
@@ -57,98 +56,81 @@ static ae2f_inline enum DASM_ERR_ dasm_lexer_execute_line(struct dasm_lexer *rdw
 		switch (rdwr_lexer->m_state) {
 		case DASM_LEXER_STATE_IDLE:
 
-#if 1
 			switch(ch) {
 				enum DASM_TOK_TYPE_	TOKTYPE_SETTYPE;
 
-				ae2f_unexpected_but_if(0) {
-					case '\'':
-						char_verification_cnt = 0;
-						rdwr_lexer->m_state = DASM_LEXER_STATE_CHAR_IMM;
-						TOKTYPE_SETTYPE = DASM_TOK_TYPE_CHAR_IMM;
-				}
+				case '\'':
+					char_verification_cnt = 0;
+					rdwr_lexer->m_state = DASM_LEXER_STATE_CHAR_IMM;
+					TOKTYPE_SETTYPE = DASM_TOK_TYPE_CHAR_IMM;
+					goto __common;			
 
-				ae2f_unexpected_but_if(0) {
-					ae2f_unreachable();
-					case '\"':
-						rdwr_lexer->m_state = DASM_LEXER_STATE_STRING_IMM;
-						TOKTYPE_SETTYPE = DASM_TOK_TYPE_STRING_IMM;
-				}
+				case '\"':
+					rdwr_lexer->m_state = DASM_LEXER_STATE_STRING_IMM;
+					TOKTYPE_SETTYPE = DASM_TOK_TYPE_STRING_IMM;
+					goto __common;			
 
-				ae2f_unexpected_but_if(0) {
-					ae2f_unreachable();
-					case '*':
-						rdwr_lexer->m_state = DASM_LEXER_STATE_STAR;
-						TOKTYPE_SETTYPE = DASM_TOK_TYPE_STAR;
-				}
-				ae2f_unexpected_but_if(0) {
-					ae2f_unreachable();
-					case '\n':
-						TOKTYPE_SETTYPE = DASM_TOK_TYPE_EOL;
-				}
+				case '*':
+					rdwr_lexer->m_state = DASM_LEXER_STATE_STAR;
+					TOKTYPE_SETTYPE = DASM_TOK_TYPE_STAR;
+					goto __common;
+			
+				case '\n':
+					TOKTYPE_SETTYPE = DASM_TOK_TYPE_EOL;
+					goto __common;			
 
-				ae2f_unexpected_but_if(0) {
-					ae2f_unreachable();
-					case '\0':
-						TOKTYPE_SETTYPE = DASM_TOK_TYPE_EOP;
-				}
+				case '\0':
+					TOKTYPE_SETTYPE = DASM_TOK_TYPE_EOP;
+					goto __common;			
 
-				ae2f_unexpected_but_if(0) {
-					ae2f_unreachable();
-					case ',':
-						TOKTYPE_SETTYPE = DASM_TOK_TYPE_COMMA;
-				}
+				case ',':
+					TOKTYPE_SETTYPE = DASM_TOK_TYPE_COMMA;
+					goto __common;			
 
-				ae2f_unexpected_but_if(0) {
-					ae2f_unreachable();
-					case ':':
-						TOKTYPE_SETTYPE = DASM_TOK_TYPE_COLON;
-				}
-
+				case ':':
+					TOKTYPE_SETTYPE = DASM_TOK_TYPE_COLON;
+					goto __common;				
+__common:
 				dasm_tok_stream_append(&rdwr_lexer->m_tok_stream);
 				dasm_tok_stream_set_lexeme(&rdwr_lexer->m_tok_stream, lexeme, 1);
 				dasm_tok_stream_set_type(&rdwr_lexer->m_tok_stream, TOKTYPE_SETTYPE);
 				ae2f_fallthrough;
 				case ' ':
-				rdwr_lexer->m_src_cnt++;
-
-				switch(ch) {
-					case '\n': case '\0':
+					rdwr_lexer->m_src_cnt++;
+				
+					if (ch == '\n' || ch == '\0') {
 						return DASM_ERR_OK;
-					default:break;
-				}
-				break;
+					}
+					break;
 
 				default:
 
 
-				if (isalpha(ch) || ch == '_'){
+					if (isalpha(ch) || ch == '_'){
 
-					rdwr_lexer->m_state = DASM_LEXER_STATE_IDENT;
+						rdwr_lexer->m_state = DASM_LEXER_STATE_IDENT;
 
-					dasm_tok_stream_append(&rdwr_lexer->m_tok_stream);
-					dasm_tok_stream_set_lexeme(&rdwr_lexer->m_tok_stream, lexeme, 1);
-					dasm_tok_stream_set_type(&rdwr_lexer->m_tok_stream, DASM_TOK_TYPE_IDENT);
+						dasm_tok_stream_append(&rdwr_lexer->m_tok_stream);
+						dasm_tok_stream_set_lexeme(&rdwr_lexer->m_tok_stream, lexeme, 1);
+						dasm_tok_stream_set_type(&rdwr_lexer->m_tok_stream, DASM_TOK_TYPE_IDENT);
 
-					rdwr_lexer->m_src_cnt++;
+						rdwr_lexer->m_src_cnt++;
 
-				} else if (isdigit(ch)) {
+					} else if (isdigit(ch)) {
 
-					rdwr_lexer->m_state = DASM_LEXER_STATE_INT_IMM;
+						rdwr_lexer->m_state = DASM_LEXER_STATE_INT_IMM;
 
-					dasm_tok_stream_append(&rdwr_lexer->m_tok_stream);
-					dasm_tok_stream_set_lexeme(&rdwr_lexer->m_tok_stream, lexeme, 1);
-					dasm_tok_stream_set_type(&rdwr_lexer->m_tok_stream, DASM_TOK_TYPE_INT_IMM);
+						dasm_tok_stream_append(&rdwr_lexer->m_tok_stream);
+						dasm_tok_stream_set_lexeme(&rdwr_lexer->m_tok_stream, lexeme, 1);
+						dasm_tok_stream_set_type(&rdwr_lexer->m_tok_stream, DASM_TOK_TYPE_INT_IMM);
 
-					rdwr_lexer->m_src_cnt++;
+						rdwr_lexer->m_src_cnt++;
 
-				} else {
-					return DASM_ERR_INVAL_PROG;
-				}
+					} else {
+						return DASM_ERR_INVAL_PROG;
+					}
+					break;
 			}
-#endif
-
-
 			break;
 
 		case DASM_LEXER_STATE_IDENT:
