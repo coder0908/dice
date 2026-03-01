@@ -17,6 +17,5 @@ enum DASM_ERR_ {
 	DASM_ERR_INVAL_IDENT,
 	DASM_ERR_INVAL_MNEMONIC
 };
- 
 
 #endif /* dasm_err_h */

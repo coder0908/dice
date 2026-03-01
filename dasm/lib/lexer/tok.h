@@ -2,7 +2,6 @@
 #define dasm_toks_h
 
 #include <ae2f/c90/StdBool.h>
-#include <dasm/err.h>
 #include <libdice/abi.h>
 #include <libdice/type.h>
 
@@ -21,12 +20,13 @@ enum DASM_TOK_TYPE_ {
 	DASM_TOK_TYPE_STAR,
 	DASM_TOK_TYPE_COMMA,
 	DASM_TOK_TYPE_COLON,
+	DASM_TOK_TYPE_DOT,
 	DASM_TOK_TYPE_EOL,
 	DASM_TOK_TYPE_EOP
 };
 
 struct dasm_tok {
-	enum DASM_TOK_TYPE_ m_tok_type;
+	enum DASM_TOK_TYPE_ m_type;
 	libdice_word_t m_lexeme_len;
 	const char *m_lexeme;
 };
@@ -59,15 +59,7 @@ DICECALL struct dasm_tok* dasm_tok_stream_peek(struct dasm_tok_stream *rdwr_tstr
  */
 DICECALL bool dasm_tok_stream_advance(struct dasm_tok_stream *rdwr_tstream);
 
-/**
- * @brief 
- * 
- * @param rdwr_tstream 
- * @param rdwr_toks 
- * @param c_toks_len 
- * @return bool Returns true on success and false on failure. 
- */
-DICECALL bool dasm_tok_stream_init(struct dasm_tok_stream *rdwr_tstream, 
+DICECALL void dasm_tok_stream_init(struct dasm_tok_stream *rdwr_tstream, 
 	struct dasm_tok rdwr_toks[], const libdice_word_t c_toks_len);
 
 DICECALL void dasm_tok_stream_deinit(struct dasm_tok_stream *rdwr_tstream);
@@ -120,5 +112,15 @@ DICECALL bool dasm_tok_stream_set_lexeme_len(struct dasm_tok_stream *rdwr_tstrea
  */
 DICECALL bool dasm_tok_stream_increase_lexeme_len(struct dasm_tok_stream *rdwr_tstream, 
 	const libdice_word_t c_add_len);
+
+/**
+* @brief return "is same type", And call dasm_tok_stream_advance()
+* 
+* @param rdwr_tstream 
+* @param c_tok_type 
+* @return bool  Returns true on same type and false on not. 
+*/
+DICECALL bool dasm_tok_stream_match(struct dasm_tok_stream *rdwr_tstream, 
+	const enum DASM_TOK_TYPE_ c_tok_type);
 	
 #endif /* dasm_toks_h */

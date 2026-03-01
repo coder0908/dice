@@ -73,4 +73,15 @@
 
 #define DASM_MNEMONIC_EOP        "eop"
 
+#define DASM_DIRECTIVE_DB	".db"
+#define DASM_DIRECTIVE_DD	".dd"
+#define DASM_DIRECTIVE_DQ	".dq"
+
+enum DASM_DIRECTIVE_CODE_ {
+	DASM_DIRECTIVE_CODE_DB,
+	DASM_DIRECTIVE_CODE_DD,
+	DASM_DIRECTIVE_CODE_DQ
+};
+
+
 #endif

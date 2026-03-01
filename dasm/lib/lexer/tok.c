@@ -1,6 +1,7 @@
-#include "./toks.h"
+#include "./tok.h"
 #include <stddef.h>
 #include <stdlib.h>
+#include <assert.h>
 
 DICEIMPL bool dasm_tok_stream_seek(struct dasm_tok_stream *rdwr_tstream, 
 	const ptrdiff_t c_offset, const enum DASM_TOK_STREAM_WHENCE_ c_whence)
@@ -9,8 +10,9 @@ DICEIMPL bool dasm_tok_stream_seek(struct dasm_tok_stream *rdwr_tstream,
 	ptrdiff_t cnt;
 	ptrdiff_t new_whence;
 
-	
-	if (!rdwr_tstream || !rdwr_tstream->m_tok_cnt) {
+	assert(rdwr_tstream);
+
+	if (!rdwr_tstream->m_tok_cnt) {
 		return false;
 	}
 	
@@ -45,7 +47,9 @@ DICEIMPL bool dasm_tok_stream_seek(struct dasm_tok_stream *rdwr_tstream,
 
 DICEIMPL struct dasm_tok* dasm_tok_stream_peek(struct dasm_tok_stream *rdwr_tstream)
 {
-	if (!rdwr_tstream || !rdwr_tstream->m_tok_cnt) {
+	assert(rdwr_tstream);
+
+	if (!rdwr_tstream->m_tok_cnt) {
 		return NULL;
 	}
 
@@ -54,7 +58,10 @@ DICEIMPL struct dasm_tok* dasm_tok_stream_peek(struct dasm_tok_stream *rdwr_tstr
 
 DICEIMPL bool dasm_tok_stream_advance(struct dasm_tok_stream *rdwr_tstream)
 {
-	if (!rdwr_tstream || (rdwr_tstream->m_whence == rdwr_tstream->m_tok_cnt - 1)) {
+	assert(rdwr_tstream);
+
+	if (!rdwr_tstream->m_tok_cnt 
+		|| (rdwr_tstream->m_whence == rdwr_tstream->m_tok_cnt - 1)) {
 		return false;
 	}
 
@@ -63,38 +70,54 @@ DICEIMPL bool dasm_tok_stream_advance(struct dasm_tok_stream *rdwr_tstream)
 	return true;
 }
 
-static bool dasm_tok_init(struct dasm_tok *rdwr_tok)
+DICEIMPL bool dasm_tok_stream_match(struct dasm_tok_stream *rdwr_tstream, 
+	const enum DASM_TOK_TYPE_ c_tok_type)
 {
-	if (!rdwr_tok) {
+	assert(rdwr_tstream);
+
+	struct dasm_tok *tok = NULL;
+
+	if (!rdwr_tstream) {
+		assert(rdwr_tstream);
 		return false;
 	}
 
+	if (!(tok = dasm_tok_stream_peek(rdwr_tstream))) {
+		return false;
+	}
+
+	dasm_tok_stream_advance(rdwr_tstream);
+
+	return tok->m_type == c_tok_type;
+}
+
+static bool dasm_tok_init(struct dasm_tok *rdwr_tok)
+{
+	assert(rdwr_tok);
+
 	rdwr_tok->m_lexeme = NULL;
 	rdwr_tok->m_lexeme_len = 0;
-	rdwr_tok->m_tok_type = DASM_TOK_TYPE_EOP;
+	rdwr_tok->m_type = DASM_TOK_TYPE_EOP;
 
 	return true;
 }
 
 static void dasm_tok_deinit(struct dasm_tok *rdwr_tok)
 {
-	if (!rdwr_tok) {
-		return;
-	}
+	assert(rdwr_tok);
 
 	rdwr_tok->m_lexeme = NULL;
 	rdwr_tok->m_lexeme_len = 0;
-	rdwr_tok->m_tok_type = DASM_TOK_TYPE_EOP;
+	rdwr_tok->m_type = DASM_TOK_TYPE_EOP;
 }
 
-DICEIMPL bool dasm_tok_stream_init(struct dasm_tok_stream *rdwr_tstream, 
+DICEIMPL void dasm_tok_stream_init(struct dasm_tok_stream *rdwr_tstream, 
 	struct dasm_tok rdwr_toks[], const libdice_word_t c_toks_len)
 {
 	libdice_word_t i;
-
-	if (!rdwr_tstream || !rdwr_toks) {
-		return false;
-	}
+	
+	assert(rdwr_tstream);
+	assert(rdwr_toks);
 
 	rdwr_tstream->m_toks = rdwr_toks;
 	rdwr_tstream->m_toks_len = c_toks_len;
@@ -104,32 +127,25 @@ DICEIMPL bool dasm_tok_stream_init(struct dasm_tok_stream *rdwr_tstream,
 	for (i=0; i<c_toks_len; ++i) {
 		if (!dasm_tok_init(&rdwr_tstream->m_toks[i])) {
 			dasm_tok_stream_deinit(rdwr_tstream);
-			return false;
+			return;
 		}
 	}
-
-	return true;
 }
 
 DICEIMPL void dasm_tok_stream_deinit(struct dasm_tok_stream *rdwr_tstream)
 {
 	libdice_word_t i;
 
-	if (!rdwr_tstream) {
-		return;
-	}
+	assert(rdwr_tstream);
 
 	for (i=0; i<rdwr_tstream->m_tok_cnt; ++i) {
 		dasm_tok_deinit(&rdwr_tstream->m_toks[i]);
-		
 	}
 }
 
 DICEIMPL bool dasm_tok_stream_append(struct dasm_tok_stream *rdwr_tstream)
 {
-	if (!rdwr_tstream) {
-		return false;
-	}	
+	assert(rdwr_tstream);	
 	
 	if (rdwr_tstream->m_tok_cnt == rdwr_tstream->m_toks_len) {
 		return false;
@@ -158,8 +174,8 @@ DICEIMPL bool dasm_tok_stream_set_type(struct dasm_tok_stream *rdwr_tstream,
 		return false;
 	}
 
-	tok->m_tok_type = c_tok_type;
-	
+	tok->m_type = c_tok_type;
+
 	return true;
 }
 
@@ -168,9 +184,8 @@ DICEIMPL bool dasm_tok_stream_set_lexeme(struct dasm_tok_stream *rdwr_tstream,
 {
 	struct dasm_tok *tok = NULL;
 
-	if (!rdwr_tstream || !rd_lexeme) {
-		return false;
-	}
+	assert(rdwr_tstream);
+	assert(rd_lexeme);
 
 	if (!dasm_tok_stream_seek(rdwr_tstream, 0, DASM_TOK_STREAM_WHENCE_END)) {
 		return false;
@@ -192,9 +207,7 @@ DICEIMPL bool dasm_tok_stream_set_lexeme_len(struct dasm_tok_stream *rdwr_tstrea
 {
 	struct dasm_tok *tok = NULL;
 
-	if (!rdwr_tstream) {
-		return false;
-	}
+	assert(rdwr_tstream);
 
 	if (!dasm_tok_stream_seek(rdwr_tstream, 0, DASM_TOK_STREAM_WHENCE_END)) {
 		return false;
@@ -215,9 +228,7 @@ DICEIMPL bool dasm_tok_stream_increase_lexeme_len(struct dasm_tok_stream *rdwr_t
 {
 	struct dasm_tok *tok = NULL;
 
-	if (!rdwr_tstream) {
-		return false;
-	}
+	assert(rdwr_tstream);
 	
 	if (!dasm_tok_stream_seek(rdwr_tstream, 0, DASM_TOK_STREAM_WHENCE_END)) {
 		return false;

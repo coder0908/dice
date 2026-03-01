@@ -1,6 +1,7 @@
 #include "./parser.h"
 #include <string.h>
 #include <dasm/keys.h>
+#include <assert.h>
 
 static struct {
 	const char *m_str;
@@ -95,3 +96,27 @@ static ae2f_inline bool dasm_lexer_is_tok_mnemonic(const char rd_str[], const li
 
 	return false;
 }
+
+static ae2f_inline enum DASM_ERR_ dasm_parser_execute_line(struct dasm_parser *rdwr_parser,
+	struct dasm_ast_programme *rdwr_ast_prog, struct dasm_tok_stream *rdwr_tok_stream)
+{
+	assert(rdwr_parser);
+	assert(rdwr_ast_prog);
+	assert(rdwr_tok_stream);
+
+	return DASM_ERR_OK;
+}
+
+DICEIMPL enum DASM_ERR_ dasm_parser_execute(struct dasm_parser *rdwr_parser,
+	struct dasm_ast_programme *rdwr_ast_prog, struct dasm_tok_stream *rdwr_tok_stream)
+{
+	enum DASM_ERR_ err = DASM_ERR_OK;
+
+	assert(rdwr_parser);
+	assert(rdwr_ast_prog);
+	assert(rdwr_tok_stream);
+
+	return err;
+}
+
+
