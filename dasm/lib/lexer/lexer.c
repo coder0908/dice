@@ -3,7 +3,6 @@
 #include <ctype.h>
 #include "dasm/err.h"
 #include "./tok.h"
-#include <stdlib.h>
 #include <assert.h>
 
 DICEIMPL void dasm_lexer_init(struct dasm_lexer *rdwr_lexer)
@@ -12,6 +11,7 @@ DICEIMPL void dasm_lexer_init(struct dasm_lexer *rdwr_lexer)
 
 	rdwr_lexer->m_src_cnt = 0;
 	rdwr_lexer->m_state = DASM_LEXER_STATE_IDLE;
+	rdwr_lexer->m_char_verification_cnt = 0;
 }
 
 DICEIMPL void dasm_lexer_deinit(struct dasm_lexer *rdwr_lexer)
@@ -20,6 +20,7 @@ DICEIMPL void dasm_lexer_deinit(struct dasm_lexer *rdwr_lexer)
 
 	rdwr_lexer->m_src_cnt = 0;
 	rdwr_lexer->m_state = DASM_LEXER_STATE_IDLE;
+	rdwr_lexer->m_char_verification_cnt = 0;
 }
 
 static ae2f_inline enum DASM_ERR_ dasm_lexer_execute_line(struct dasm_lexer *rdwr_lexer, 
@@ -27,7 +28,6 @@ static ae2f_inline enum DASM_ERR_ dasm_lexer_execute_line(struct dasm_lexer *rdw
 	const char rd_src[], const libdice_word_t c_src_len)
 {
 
-	libdice_word_t char_verification_cnt = 0;
 
 	assert(rdwr_lexer);
 	assert(rdwr_tok_stream);
@@ -47,7 +47,7 @@ static ae2f_inline enum DASM_ERR_ dasm_lexer_execute_line(struct dasm_lexer *rdw
 				enum DASM_TOK_TYPE_	TOKTYPE_SETTYPE;
 
 				case '\'':
-					char_verification_cnt = 0;
+					rdwr_lexer->m_char_verification_cnt = 0;
 					rdwr_lexer->m_state = DASM_LEXER_STATE_CHAR_IMM;
 					TOKTYPE_SETTYPE = DASM_TOK_TYPE_CHAR_IMM;
 					goto __common;			
@@ -94,7 +94,6 @@ __common:
 					break;
 
 				default:
-
 
 					if (isalpha(ch) || ch == '_'){
 
@@ -147,7 +146,7 @@ __common:
 
 			switch (ch) {
 				case '\'':
-					if (char_verification_cnt != 1) {
+					if (rdwr_lexer->m_char_verification_cnt != 1) {
 						return DASM_ERR_INVAL_CHAR_IMM;
 					}
 					dasm_tok_stream_increase_lexeme_len(rdwr_tok_stream, 1);
@@ -159,7 +158,7 @@ __common:
 				case '\0':
 					return DASM_ERR_INVAL_CHAR_IMM;
 				default:
-					char_verification_cnt++;
+					rdwr_lexer->m_char_verification_cnt++;
 
 					dasm_tok_stream_increase_lexeme_len(rdwr_tok_stream, 1);
 					rdwr_lexer->m_src_cnt++;

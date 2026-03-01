@@ -21,7 +21,7 @@ enum DASM_LEXER_STATE_ {
 
 struct dasm_lexer {
 	libdice_word_t m_src_cnt;
-	
+	libdice_word_t m_char_verification_cnt;
 	enum DASM_LEXER_STATE_ m_state;
 };
 

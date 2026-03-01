@@ -77,16 +77,9 @@ DICEIMPL bool dasm_tok_stream_match(struct dasm_tok_stream *rdwr_tstream,
 
 	struct dasm_tok *tok = NULL;
 
-	if (!rdwr_tstream) {
-		assert(rdwr_tstream);
-		return false;
-	}
-
 	if (!(tok = dasm_tok_stream_peek(rdwr_tstream))) {
 		return false;
 	}
-
-	dasm_tok_stream_advance(rdwr_tstream);
 
 	return tok->m_type == c_tok_type;
 }

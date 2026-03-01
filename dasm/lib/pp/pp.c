@@ -1,7 +1,6 @@
 #include <ae2f/cc.h>
 #include "./pp.h"
 #include <dasm/err.h>
-#include <stdlib.h>
 #include <assert.h>
 
 DICEIMPL bool dasm_pp_init(struct dasm_pp *rdwr_pp)

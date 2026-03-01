@@ -1,4 +1,5 @@
 #include "./parser.h"
+#include "dasm/err.h"
 #include <string.h>
 #include <dasm/keys.h>
 #include <assert.h>
@@ -104,6 +105,19 @@ static ae2f_inline enum DASM_ERR_ dasm_parser_execute_line(struct dasm_parser *r
 	assert(rdwr_ast_prog);
 	assert(rdwr_tok_stream);
 
+	if (!dasm_tok_stream_match(rdwr_tok_stream, DASM_TOK_TYPE_IDENT)) {
+		return DASM_ERR_INVAL_PROG;
+	}
+	dasm_tok_stream_advance(rdwr_tok_stream);
+
+	if (dasm_tok_stream_match(rdwr_tok_stream, DASM_TOK_TYPE_COLON)) {
+		/* label */
+		
+	} else {
+		/* statement */
+
+	}
+
 	return DASM_ERR_OK;
 }
 
@@ -115,6 +129,13 @@ DICEIMPL enum DASM_ERR_ dasm_parser_execute(struct dasm_parser *rdwr_parser,
 	assert(rdwr_parser);
 	assert(rdwr_ast_prog);
 	assert(rdwr_tok_stream);
+
+	if (!dasm_tok_stream_seek(rdwr_tok_stream, 0, DASM_TOK_STREAM_WHENCE_SET)) {
+		return DASM_ERR_INVAL_PROG;
+	}
+
+	dasm_parser_execute_line(rdwr_parser, rdwr_ast_prog, rdwr_tok_stream);
+
 
 	return err;
 }
